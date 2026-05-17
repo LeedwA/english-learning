@@ -839,6 +839,29 @@ function initDict() {
   state.dictTotal = words.length;
   state.dictAnswered = false;
   state.learnedSet = new Set();
+  // Restore dict DOM if result view replaced it
+  if (!$('#dictInput')) {
+    $('#view-dict').innerHTML = `
+      <div class="dict-header">
+        <div class="dict-day-label" id="dictDayLabel">${getCurrentDayObj().title} · 听写</div>
+        <div class="dict-progress-text" id="dictProgressText">0 / 0 正确</div>
+        <div class="progress-bar-outer"><div class="progress-bar-inner" id="dictProgressBar" style="width:0%"></div></div>
+        <div class="dict-prompt">
+          <div class="dict-chinese" id="dictChinese">-</div>
+          <div class="dict-hint">输入英文单词</div>
+        </div>
+      </div>
+      <input type="text" class="dict-input" id="dictInput" placeholder="输入英文单词" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div class="dict-answer" id="dictAnswer">
+        <div class="answer-en" id="answerEn">-</div>
+        <div class="answer-zh" id="answerZh"></div>
+        <div class="answer-msg" id="answerMsg"></div>
+      </div>
+      <button class="dict-btn" id="dictSubmitBtn" onclick="submitDict()">确认</button>
+      <button class="dict-btn" id="dictNextBtn" onclick="nextDict()" style="display:none;background:var(--success)">下一题 →</button>
+    `;
+    document.getElementById('dictInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitDict(); });
+  }
   $('#dictDayLabel').textContent = getCurrentDayObj().title + ' · 听写';
   $('#dictProgressText').textContent = '0 / ' + state.dictTotal + ' 正确';
   $('#dictProgressBar').style.width = '0%';
