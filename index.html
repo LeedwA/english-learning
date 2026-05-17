@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>小飞英语单词闯关</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
   --success: #5DCA5D;
   --danger: #FF6B6B;
   --gold: #FFB347;
-  --purple: #A855F7;
   --text: #2D3748;
   --muted: #718096;
   --card: #FFFFFF;
@@ -22,6 +21,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
 
 body {
   font-family: 'Nunito', 'Noto Sans SC', system-ui, sans-serif;
@@ -33,879 +33,234 @@ body {
   overflow-x: hidden;
 }
 
-/* ─── Top Progress Bar ─── */
+/* ─── Top Bar ─── */
 .top-bar {
   position: sticky;
   top: 0;
   z-index: 100;
   background: var(--bg);
-  padding: 16px 16px 12px;
+  padding: 14px 16px 10px;
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
-
-.top-bar-inner {
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo {
-  font-family: 'Fredoka One', cursive;
-  font-size: 20px;
-  color: var(--primary);
-  white-space: nowrap;
-}
-
-.day-counter {
-  background: var(--primary);
-  color: white;
-  font-weight: 800;
-  font-size: 14px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-.progress-track {
-  flex: 1;
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
+.top-bar-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.logo { font-family: 'Fredoka One', cursive; font-size: 18px; color: var(--primary); white-space: nowrap; }
+.day-counter { background: var(--primary); color: white; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.progress-track { flex: 1; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .progress-track::-webkit-scrollbar { display: none; }
 
 .day-dot {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #E2E8F0;
-  border: 2px solid #CBD5E0;
-  transition: all 0.3s;
-  position: relative;
-  cursor: pointer;
+  flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%;
+  background: #E2E8F0; border: 2px solid #CBD5E0;
+  transition: all 0.3s; cursor: pointer; position: relative;
+}
+.day-dot.done { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 6px rgba(255,179,71,0.4); }
+.day-dot.today { border-color: var(--primary); background: var(--primary); animation: pulse 2s infinite; }
+.day-dot.today.done { background: var(--gold); border-color: var(--gold); animation: none; }
+.day-dot.locked { opacity: 0.4; cursor: not-allowed; }
+.day-dot.active-day { transform: scale(1.2); }
+
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(91,143,249,0.4); } 50% { box-shadow: 0 0 0 5px rgba(91,143,249,0); } }
+
+.day-lock-hint {
+  font-size: 11px; color: var(--muted); text-align: center;
+  padding: 6px 16px 0; font-family: 'Noto Sans SC', sans-serif;
 }
 
-.day-dot.done {
-  background: var(--gold);
-  border-color: var(--gold);
-  box-shadow: 0 0 6px rgba(255,179,71,0.5);
-}
-
-.day-dot.today {
-  border-color: var(--primary);
-  background: var(--primary);
-  animation: pulse 2s infinite;
-}
-
-.day-dot.today.done {
-  background: var(--gold);
-  border-color: var(--gold);
-  animation: none;
-}
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(91,143,249,0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(91,143,249,0); }
-}
-
-/* ─── Main Content ─── */
-.main-content {
-  flex: 1;
-  padding: 20px 16px 100px;
-  max-width: 480px;
-  margin: 0 auto;
-  width: 100%;
-}
+/* ─── Main ─── */
+.main-content { flex: 1; padding: 16px 16px 90px; max-width: 480px; margin: 0 auto; width: 100%; }
 
 /* ─── Views ─── */
 .view { display: none; }
 .view.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ─── Day Selector ─── */
+.day-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px; scrollbar-width: none; }
+.day-tabs::-webkit-scrollbar { display: none; }
+.day-tab {
+  flex-shrink: 0; padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 700;
+  border: 2px solid transparent; background: #EDF2F7; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
+.day-tab.done { background: #FFF7E6; border-color: var(--gold); color: var(--gold); }
+.day-tab.active { background: #EBF4FF; border-color: var(--primary); color: var(--primary); }
+.day-tab.locked { opacity: 0.45; cursor: not-allowed; }
+.day-tab-num { font-family: 'Nunito', sans-serif; }
+
+/* ─── Section Title ─── */
+.section-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: var(--primary); margin-bottom: 6px; }
+.section-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
 
 /* ─── Word Card ─── */
 .word-card {
-  background: var(--card);
-  border-radius: 24px;
-  padding: 28px 24px;
-  box-shadow: var(--shadow);
-  text-align: center;
-  margin-bottom: 16px;
+  background: var(--card); border-radius: 20px; padding: 24px 20px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+  animation: cardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
-  overflow: hidden;
-  animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transition: transform 0.2s;
 }
+@keyframes cardIn { from { opacity: 0; transform: scale(0.9) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-@keyframes cardIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.word-card:hover { transform: translateY(-2px); }
-
-.word-english {
-  font-size: 48px;
-  font-weight: 800;
-  color: var(--primary);
-  font-family: 'Nunito', sans-serif;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-}
-
-.word-chinese {
-  font-size: 22px;
-  color: var(--text);
-  margin-bottom: 20px;
-  font-weight: 500;
-}
-
-.word-sentence {
-  font-size: 16px;
-  color: var(--muted);
-  background: #F7FAFC;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  line-height: 1.6;
-}
-
+.word-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
 .speak-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #EDF2F7;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 44px; height: 44px; border-radius: 50%; background: #EDF2F7;
+  border: none; cursor: pointer; font-size: 20px; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-
-.speak-btn:hover { background: var(--primary); transform: scale(1.1); }
+.speak-btn:hover { background: var(--primary); transform: scale(1.08); }
 .speak-btn:active { transform: scale(0.95); }
-
-/* ─── Card Nav Buttons ─── */
-.card-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.btn {
-  flex: 1;
-  padding: 14px;
-  border: none;
-  border-radius: 50px;
-  font-size: 16px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Nunito', sans-serif;
-}
-
-.btn:active { transform: scale(0.97); }
-
-.btn-knew {
-  background: #EDF2F7;
-  color: var(--text);
-}
-.btn-knew:hover { background: #E2E8F0; }
-
-.btn-forgot {
-  background: #FEE2E2;
-  color: var(--danger);
-}
-.btn-forgot:hover { background: #FED7D7; }
-
-.btn-next {
-  background: var(--primary);
-  color: white;
-  width: 100%;
-  margin-top: 8px;
-}
-.btn-next:hover { background: #4A7DE8; }
-
-/* ─── Dictation View ─── */
-.dictation-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.dictation-day-label {
-  font-family: 'Fredoka One', cursive;
-  font-size: 24px;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.dictation-progress {
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: 20px;
-}
-
-.progress-bar-outer {
-  background: #EDF2F7;
-  border-radius: 10px;
-  height: 10px;
-  overflow: hidden;
-  margin-bottom: 32px;
-}
-
-.progress-bar-inner {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), #7CB8FF);
-  border-radius: 10px;
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.dictation-prompt {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.dictation-chinese {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-
-.dictation-hint {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.dictation-input-wrap {
-  position: relative;
-  margin-bottom: 16px;
-}
-
-.dictation-input {
-  width: 100%;
-  padding: 16px 20px;
-  font-size: 24px;
-  font-family: 'Nunito', sans-serif;
-  font-weight: 700;
-  border: 3px solid #E2E8F0;
-  border-radius: 20px;
-  outline: none;
-  transition: border-color 0.2s;
-  text-align: center;
-  letter-spacing: 2px;
-  background: white;
-}
-
-.dictation-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(91,143,249,0.15);
-}
-
-.dictation-input.correct {
-  border-color: var(--success);
-  background: #F0FFF4;
-  animation: correctPop 0.4s ease;
-}
-
-.dictation-input.wrong {
-  border-color: var(--danger);
-  background: #FFF5F5;
-  animation: shake 0.4s ease;
-}
-
-@keyframes correctPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-  100% { transform: scale(1); }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-8px); }
-  40% { transform: translateX(8px); }
-  60% { transform: translateX(-6px); }
-  80% { transform: translateX(6px); }
-}
-
-.dictation-answer {
-  text-align: center;
-  padding: 16px;
-  border-radius: 16px;
-  margin-bottom: 16px;
-  animation: fadeIn 0.3s ease;
-  display: none;
-}
-
-.dictation-answer.show { display: block; }
-.dictation-answer.correct-answer { background: #F0FFF4; }
-.dictation-answer.wrong-answer { background: #FFF5F5; }
-
-.answer-english {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--success);
-  margin-bottom: 4px;
-}
-
-.answer-english.wrong { color: var(--danger); }
-
-.answer-chinese {
-  font-size: 16px;
-  color: var(--muted);
-}
-
-.dictation-submit {
-  width: 100%;
-  padding: 16px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-size: 18px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.dictation-submit:hover { background: #4A7DE8; }
-.dictation-submit:active { transform: scale(0.98); }
-
-.dictation-submit:disabled {
-  background: #CBD5E0;
-  cursor: not-allowed;
-}
-
-/* ─── Result Card ─── */
-.result-card {
-  background: var(--card);
-  border-radius: 24px;
-  padding: 32px 24px;
-  box-shadow: var(--shadow);
-  text-align: center;
-  animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.result-emoji {
-  font-size: 64px;
-  margin-bottom: 16px;
-}
-
-.result-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 28px;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.result-subtitle {
-  font-size: 16px;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
-
-.result-stats {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.result-stat {
-  flex: 1;
-  background: #F7FAFC;
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.result-stat-num {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--primary);
-}
-
-.result-stat-label {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-/* ─── Day Grid ─── */
-.section-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 24px;
-  color: var(--primary);
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.day-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.day-box {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 16px 12px;
-  box-shadow: var(--shadow);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-}
-
-.day-box:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-
-.day-box.active {
-  border-color: var(--primary);
-  background: #EBF4FF;
-}
-
-.day-box.locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.day-box-num {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--primary);
-  font-family: 'Fredoka One', cursive;
-}
-
-.day-box-label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-.day-box-status {
-  font-size: 18px;
-  margin-top: 4px;
-}
-
-/* ─── Stats / My Page ─── */
-.stats-card {
-  background: var(--card);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: var(--shadow);
-  margin-bottom: 16px;
-}
-
-.stats-title {
-  font-size: 14px;
-  color: var(--muted);
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.stats-num {
-  font-family: 'Fredoka One', cursive;
-  font-size: 48px;
-  color: var(--primary);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stats-label {
-  font-size: 16px;
-  color: var(--muted);
-}
-
-.wrong-list {
-  background: var(--card);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: var(--shadow);
-}
-
-.wrong-list-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: var(--text);
-}
-
-.wrong-word-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #F1F5F4;
-  font-size: 16px;
-}
-
-.wrong-word-item:last-child { border-bottom: none; }
-
-.wrong-word-en {
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.wrong-word-zh {
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 32px;
-  color: var(--muted);
-  font-size: 15px;
-}
-
-.empty-state-emoji { font-size: 48px; margin-bottom: 12px; }
-
-/* ─── Bottom Nav ─── */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid rgba(0,0,0,0.06);
-  padding: 8px 16px;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
-  z-index: 100;
-}
-
-.bottom-nav-inner {
-  display: flex;
-  gap: 8px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 8px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-radius: 16px;
-  transition: all 0.2s;
-  font-size: 11px;
-  font-family: inherit;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.nav-btn.active {
-  background: #EBF4FF;
-  color: var(--primary);
-}
-
-.nav-btn-icon {
-  font-size: 22px;
-  line-height: 1;
-}
-
-/* ─── Celebration Modal ─── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 16px;
-}
-
-.modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-
-.modal-card {
-  background: white;
-  border-radius: 28px;
-  padding: 40px 32px;
-  text-align: center;
-  max-width: 360px;
-  width: 100%;
-  animation: modalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.8) translateY(30px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal-emoji { font-size: 72px; margin-bottom: 16px; }
-
-.modal-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 32px;
-  color: var(--primary);
-  margin-bottom: 12px;
-}
-
-.modal-subtitle {
-  font-size: 16px;
-  color: var(--muted);
-  margin-bottom: 24px;
-  line-height: 1.6;
-}
-
-.modal-btn {
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 14px 32px;
-  font-size: 16px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.modal-btn:hover { background: #4A7DE8; }
-
-/* Confetti */
-.confetti-piece {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  animation: confettiFall 1s ease-out forwards;
-}
-
-@keyframes confettiFall {
-  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
-}
-
-/* ─── Checkin Banner ─── */
-.checkin-banner {
-  background: linear-gradient(135deg, var(--primary), #7CB8FF);
-  border-radius: 20px;
-  padding: 20px 24px;
-  color: white;
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.checkin-banner-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 22px;
-  margin-bottom: 6px;
-}
-
-.checkin-banner-sub {
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-.checkin-btn {
-  background: white;
-  color: var(--primary);
-  border: none;
-  border-radius: 50px;
-  padding: 12px 28px;
-  font-size: 16px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  margin-top: 12px;
-  transition: all 0.2s;
-}
-
-.checkin-btn:hover { transform: scale(1.05); }
-.checkin-btn:disabled { background: rgba(255,255,255,0.5); color: white; cursor: not-allowed; transform: none; }
-
-/* ─── Study Mode ─── */
-.study-group-label {
-  text-align: center;
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 12px;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-.word-group-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.word-mini-card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 16px 12px;
-  box-shadow: var(--shadow);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-}
-
-.word-mini-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
-.word-mini-card.known { border-color: var(--success); background: #F0FFF4; }
-.word-mini-card.unknown { border-color: var(--danger); background: #FFF5F5; }
-
-.word-mini-en {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 4px;
-  word-break: break-all;
-}
-
-.word-mini-zh {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.study-nav {
-  display: flex;
-  gap: 12px;
-}
-
-.study-progress-dots {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.study-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #E2E8F0;
-  transition: all 0.3s;
-}
-
+.speak-btn.speaking { background: var(--primary); animation: speakPulse 0.6s ease infinite; }
+@keyframes speakPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(91,143,249,0.4); } 50% { box-shadow: 0 0 0 8px rgba(91,143,249,0); } }
+
+.word-en {
+  font-size: 44px; font-weight: 800; color: var(--primary);
+  font-family: 'Nunito', sans-serif; line-height: 1.1;
+  letter-spacing: 1px; word-break: break-all;
+}
+.word-divider { height: 2px; background: linear-gradient(90deg, var(--primary), transparent); margin: 14px 0; border-radius: 2px; opacity: 0.2; }
+.word-means { display: flex; flex-direction: column; gap: 6px; }
+.word-mean { font-size: 18px; color: var(--text); font-weight: 500; padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+.word-mean-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.word-sentence { font-size: 15px; color: var(--muted); font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 1px solid #F1F5F4; line-height: 1.6; }
+
+/* ─── Study Progress ─── */
+.study-progress { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; }
+.study-dot { width: 8px; height: 8px; border-radius: 50%; background: #E2E8F0; transition: all 0.3s; }
 .study-dot.active { background: var(--primary); width: 20px; border-radius: 4px; }
 .study-dot.done { background: var(--success); }
 
-/* ─── Welcome / Onboarding ─── */
-.welcome-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  text-align: center;
-  padding: 24px;
+/* ─── Buttons ─── */
+.btn-row { display: flex; gap: 10px; }
+.btn { flex: 1; padding: 14px; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
+.btn:active { transform: scale(0.97); }
+.btn-knew { background: #EDF2F7; color: var(--text); }
+.btn-knew:hover { background: #E2E8F0; }
+.btn-forgot { background: #FEE2E2; color: var(--danger); }
+.btn-forgot:hover { background: #FED7D7; }
+.btn-next { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
+.btn-next:hover { background: #4A7DE8; }
+.btn-secondary { background: #EDF2F7; color: var(--text); width: 100%; margin-top: 8px; }
+
+/* ─── Dictation ─── */
+.dict-header { text-align: center; margin-bottom: 20px; }
+.dict-day-label { font-family: 'Fredoka One', cursive; font-size: 20px; color: var(--primary); margin-bottom: 4px; }
+.dict-progress-text { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.progress-bar-outer { background: #EDF2F7; border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 24px; }
+.progress-bar-inner { height: 100%; background: linear-gradient(90deg, var(--primary), #7CB8FF); border-radius: 8px; transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+
+.dict-prompt { text-align: center; margin-bottom: 16px; }
+.dict-chinese { font-size: 36px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.dict-hint { font-size: 13px; color: var(--muted); }
+
+.dict-input { width: 100%; padding: 14px 20px; font-size: 22px; font-family: 'Nunito', sans-serif; font-weight: 700; border: 3px solid #E2E8F0; border-radius: 16px; outline: none; transition: border-color 0.2s; text-align: center; letter-spacing: 2px; background: white; }
+.dict-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(91,143,249,0.12); }
+.dict-input.correct { border-color: var(--success); background: #F0FFF4; animation: pop 0.3s ease; }
+.dict-input.wrong { border-color: var(--danger); background: #FFF5F5; animation: shake 0.4s ease; }
+@keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+
+.dict-answer { text-align: center; padding: 14px; border-radius: 14px; margin-top: 12px; display: none; animation: fadeIn 0.3s ease; }
+.dict-answer.show { display: block; }
+.dict-answer.correct-a { background: #F0FFF4; }
+.dict-answer.wrong-a { background: #FFF5F5; }
+.answer-en { font-size: 26px; font-weight: 800; font-family: 'Nunito', sans-serif; }
+.answer-en.correct-c { color: var(--success); }
+.answer-en.wrong-c { color: var(--danger); }
+.answer-zh { font-size: 14px; color: var(--muted); margin-top: 4px; }
+.answer-msg { font-size: 16px; font-weight: 700; margin-top: 10px; color: var(--text); }
+
+.dict-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 50px; font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 12px; transition: all 0.2s; }
+.dict-btn:hover { background: #4A7DE8; }
+.dict-btn:active { transform: scale(0.98); }
+.dict-btn-next { display: none; margin-top: 8px; background: var(--success); }
+
+/* ─── Feedback Toast ─── */
+.toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: var(--text); color: white; padding: 12px 24px; border-radius: 50px;
+  font-size: 16px; font-weight: 700; z-index: 999; white-space: nowrap;
+  opacity: 0; transition: all 0.3s ease; pointer-events: none;
 }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+.toast.gold { background: var(--gold); color: var(--text); }
 
-.welcome-emoji { font-size: 80px; margin-bottom: 24px; }
+/* ─── Checkin Banner ─── */
+.checkin-banner { background: linear-gradient(135deg, var(--primary), #7CB8FF); border-radius: 18px; padding: 18px 20px; color: white; margin-bottom: 20px; text-align: center; }
+.checkin-banner-title { font-family: 'Fredoka One', cursive; font-size: 20px; margin-bottom: 4px; }
+.checkin-banner-sub { font-size: 13px; opacity: 0.85; margin-bottom: 12px; }
+.checkin-btn { background: white; color: var(--primary); border: none; border-radius: 50px; padding: 12px 28px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
+.checkin-btn:hover { transform: scale(1.04); }
+.checkin-btn.done { background: rgba(255,255,255,0.5); color: white; cursor: default; transform: none; }
 
-.welcome-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 32px;
-  color: var(--primary);
-  margin-bottom: 12px;
-  line-height: 1.2;
-}
+/* ─── Day Task Info ─── */
+.task-info { background: #EBF4FF; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; border: 1px solid #C3DAFF; }
+.task-info-label { font-size: 12px; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.task-info-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.task-info-sub { font-size: 13px; color: var(--muted); }
 
-.welcome-desc {
-  font-size: 16px;
-  color: var(--muted);
-  margin-bottom: 32px;
-  line-height: 1.7;
-  max-width: 320px;
-}
+/* ─── Result Card ─── */
+.result-card { background: var(--card); border-radius: 24px; padding: 32px 24px; box-shadow: var(--shadow); text-align: center; animation: cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+.result-emoji { font-size: 60px; margin-bottom: 16px; }
+.result-title { font-family: 'Fredoka One', cursive; font-size: 28px; color: var(--primary); margin-bottom: 8px; }
+.result-subtitle { font-size: 15px; color: var(--muted); margin-bottom: 24px; }
+.result-stats { display: flex; gap: 12px; margin-bottom: 24px; }
+.result-stat { flex: 1; background: #F7FAFC; border-radius: 14px; padding: 14px; }
+.result-stat-num { font-size: 28px; font-weight: 800; color: var(--primary); }
+.result-stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-.welcome-start-btn {
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 16px 40px;
-  font-size: 18px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s;
-  animation: bounce 2s infinite;
-}
+/* ─── Stats / My ─── */
+.stats-card { background: var(--card); border-radius: 20px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 14px; text-align: center; }
+.stats-num { font-family: 'Fredoka One', cursive; font-size: 56px; color: var(--primary); line-height: 1; }
+.stats-label { font-size: 14px; color: var(--muted); margin-top: 4px; }
 
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
+.wrong-list { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); }
+.wrong-list-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+.wrong-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F1F5F4; }
+.wrong-item:last-child { border-bottom: none; }
+.wrong-en { font-weight: 800; color: var(--primary); font-size: 16px; font-family: 'Nunito', sans-serif; }
+.wrong-zh { color: var(--muted); font-size: 13px; margin-left: 8px; }
+.wrong-speak { background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; }
+.empty-state { text-align: center; padding: 28px; color: var(--muted); }
+.empty-state-emoji { font-size: 44px; margin-bottom: 8px; }
 
-.welcome-start-btn:hover { background: #4A7DE8; animation: none; }
+/* ─── Bottom Nav ─── */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid rgba(0,0,0,0.06); padding: 8px 16px; padding-bottom: max(8px,env(safe-area-inset-bottom)); z-index: 100; }
+.bottom-nav-inner { display: flex; gap: 6px; max-width: 480px; margin: 0 auto; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border: none; background: none; cursor: pointer; border-radius: 14px; transition: all 0.2s; font-size: 10px; font-family: inherit; color: var(--muted); font-weight: 600; }
+.nav-btn.active { background: #EBF4FF; color: var(--primary); }
+.nav-icon { font-size: 22px; line-height: 1; }
 
-/* ─── Graduation ─── */
-.graduation-screen {
-  text-align: center;
-  padding: 24px;
-  min-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+/* ─── Modal ─── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.modal-overlay.show { display: flex; }
+.modal-card { background: white; border-radius: 24px; padding: 36px 28px; text-align: center; max-width: 340px; width: 100%; animation: modalIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes modalIn { from{opacity:0;transform:scale(0.8) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-emoji { font-size: 64px; margin-bottom: 14px; }
+.modal-title { font-family: 'Fredoka One', cursive; font-size: 28px; color: var(--primary); margin-bottom: 8px; }
+.modal-subtitle { font-size: 15px; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+.modal-btn { background: var(--primary); color: white; border: none; border-radius: 50px; padding: 13px 32px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
 
-.graduation-emoji { font-size: 80px; margin-bottom: 20px; }
+/* Confetti */
+.confetti-piece { position: absolute; width: 8px; height: 8px; border-radius: 2px; animation: confettiFall 1s ease-out forwards; }
+@keyframes confettiFall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(200px) rotate(720deg);opacity:0} }
 
-.graduation-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 28px;
-  color: var(--gold);
-  margin-bottom: 16px;
-}
+/* ─── Review Mode ─── */
+.review-bar { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 12px; scrollbar-width: none; }
+.review-bar::-webkit-scrollbar { display: none; }
+.rev-dot { width: 10px; height: 10px; border-radius: 50%; background: #E2E8F0; flex-shrink: 0; transition: all 0.3s; cursor: pointer; }
+.rev-dot.active { background: var(--primary); transform: scale(1.3); }
+.rev-dot.done { background: var(--success); }
+.rev-dot.wrong { background: var(--danger); }
 
-.graduation-cert {
-  background: linear-gradient(135deg, #FFFBEB, #FFF7CC);
-  border: 3px solid var(--gold);
-  border-radius: 24px;
-  padding: 28px 24px;
-  margin-bottom: 24px;
-  max-width: 320px;
-  width: 100%;
-}
-
-.graduation-cert-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: 20px;
-  color: var(--gold);
-  margin-bottom: 8px;
-}
-
-.graduation-cert-name {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-
-.graduation-cert-desc {
-  font-size: 14px;
-  color: var(--muted);
-}
-
+/* ─── Study Done State ─── */
+.study-done { text-align: center; padding: 32px 16px; }
+.study-done-emoji { font-size: 56px; margin-bottom: 14px; }
+.study-done-title { font-family: 'Fredoka One', cursive; font-size: 24px; color: var(--primary); margin-bottom: 8px; }
+.study-done-sub { font-size: 15px; color: var(--muted); margin-bottom: 20px; }
 </style>
 </head>
 <body>
 
-<!-- Top Bar -->
 <div class="top-bar">
   <div class="top-bar-inner">
     <div class="logo">🐦 小飞英语</div>
@@ -913,81 +268,68 @@ body {
     <div class="progress-track" id="progressTrack"></div>
   </div>
 </div>
+<div class="day-lock-hint" id="lockHint">每天最多解锁3天</div>
 
-<!-- Main Content -->
 <div class="main-content">
 
   <!-- LEARN View -->
   <div class="view active" id="view-learn">
-    <div class="section-title" id="studySectionTitle">第1天 · 学习模式</div>
+    <div class="section-title" id="dayTitle">第1天</div>
+    <div class="section-sub" id="daySub">每天15个新词</div>
 
     <div class="checkin-banner" id="checkinBanner">
-      <div class="checkin-banner-title">📢 今日打卡任务</div>
-      <div class="checkin-banner-sub">完成学习后就可以打卡哦！</div>
-      <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">🎉 我要打卡！</button>
+      <div class="checkin-banner-title" id="checkinTitle">今日打卡任务</div>
+      <div class="checkin-banner-sub">完成学习+听写即可打卡</div>
+      <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">🎯 我要打卡！</button>
     </div>
 
-    <div class="study-progress-dots" id="studyProgressDots"></div>
-
-    <div class="study-group-label" id="studyGroupLabel">第 1-3 词</div>
-    <div class="word-group-grid" id="wordGroupGrid"></div>
-
-    <div class="study-nav">
-      <button class="btn btn-knew" onclick="markKnown(true)">✅ 认识了</button>
-      <button class="btn btn-forgot" onclick="markKnown(false)">❌ 还不会</button>
+    <div class="task-info" id="taskInfo" style="display:none">
+      <div class="task-info-label">今日任务</div>
+      <div class="task-info-title" id="taskTitle"></div>
+      <div class="task-info-sub" id="taskSub"></div>
     </div>
 
-    <div style="margin-top:20px; text-align:center;">
-      <button class="btn btn-next" onclick="goToDictation()">📝 去听写 →</button>
-    </div>
+    <div class="study-progress" id="studyProgress"></div>
+    <div id="wordCardArea"></div>
+    <div id="learnActions"></div>
   </div>
 
   <!-- DICTATION View -->
-  <div class="view" id="view-dictation">
-    <div class="dictation-header">
-      <div class="dictation-day-label" id="dictDayLabel">第1天 · 听写</div>
-      <div class="dictation-progress" id="dictProgress">0 / 15 正确</div>
-      <div class="progress-bar-outer">
-        <div class="progress-bar-inner" id="dictProgressBar" style="width:0%"></div>
-      </div>
-      <div class="dictation-prompt">
-        <div class="dictation-chinese" id="dictChinese">苹果</div>
-        <div class="dictation-hint">输入对应的英文单词</div>
+  <div class="view" id="view-dict">
+    <div class="dict-header">
+      <div class="dict-day-label" id="dictDayLabel">第1天 · 听写</div>
+      <div class="dict-progress-text" id="dictProgressText">0 / 15 正确</div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="dictProgressBar" style="width:0%"></div></div>
+      <div class="dict-prompt">
+        <div class="dict-chinese" id="dictChinese">苹果</div>
+        <div class="dict-hint">输入英文单词</div>
       </div>
     </div>
-
-    <div class="dictation-input-wrap">
-      <input type="text" class="dictation-input" id="dictInput" placeholder="输入英文单词" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <input type="text" class="dict-input" id="dictInput" placeholder="输入英文单词" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div class="dict-answer" id="dictAnswer">
+      <div class="answer-en" id="answerEn">apple</div>
+      <div class="answer-zh" id="answerZh">苹果</div>
+      <div class="answer-msg" id="answerMsg"></div>
     </div>
-
-    <div class="dictation-answer" id="dictAnswer">
-      <div class="answer-english" id="answerEnglish">apple</div>
-      <div class="answer-chinese" id="answerChinese">苹果</div>
-    </div>
-
-    <button class="dictation-submit" id="dictSubmit" onclick="submitDict()">确认 ✓</button>
-    <button class="dictation-submit" id="dictNextBtn" onclick="nextDict()" style="display:none; margin-top:8px; background:var(--success);">下一题 →</button>
+    <button class="dict-btn" id="dictSubmitBtn" onclick="submitDict()">确认</button>
+    <button class="dict-btn dict-btn-next" id="dictNextBtn" onclick="nextDict()">下一题 →</button>
   </div>
 
   <!-- REVIEW View -->
   <div class="view" id="view-review">
-    <div class="section-title">📚 复习模式</div>
+    <div class="section-title">📚 错题复习</div>
     <div id="reviewContent"></div>
   </div>
 
   <!-- MY View -->
   <div class="view" id="view-my">
     <div class="section-title">🏆 我的进度</div>
-
     <div class="stats-card">
-      <div class="stats-title">已打卡天数</div>
-      <div class="stats-num" id="statsDays">0</div>
-      <div class="stats-label">共21天挑战</div>
+      <div class="stats-num" id="myDays">0</div>
+      <div class="stats-label">已完成打卡天数 / 共21天</div>
     </div>
-
-    <div class="day-grid" id="dayGrid"></div>
-
-    <div class="wrong-list" style="margin-top:16px;">
+    <div id="myDayGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
+    <div class="wrong-list">
       <div class="wrong-list-title">📝 错题本</div>
       <div id="wrongListContent"></div>
     </div>
@@ -998,21 +340,17 @@ body {
 <!-- Bottom Nav -->
 <div class="bottom-nav">
   <div class="bottom-nav-inner">
-    <button class="nav-btn active" onclick="switchView('learn')" id="nav-learn">
-      <span class="nav-btn-icon">📖</span>
-      <span>学习</span>
+    <button class="nav-btn active" id="nav-learn" onclick="switchView('learn')">
+      <span class="nav-icon">📖</span><span>学习</span>
     </button>
-    <button class="nav-btn" onclick="switchView('dictation')" id="nav-dictation">
-      <span class="nav-btn-icon">✏️</span>
-      <span>听写</span>
+    <button class="nav-btn" id="nav-dict" onclick="switchView('dict')">
+      <span class="nav-icon">✏️</span><span>听写</span>
     </button>
-    <button class="nav-btn" onclick="switchView('review')" id="nav-review">
-      <span class="nav-btn-icon">🔄</span>
-      <span>复习</span>
+    <button class="nav-btn" id="nav-review" onclick="switchView('review')">
+      <span class="nav-icon">🔄</span><span>复习</span>
     </button>
-    <button class="nav-btn" onclick="switchView('my')" id="nav-my">
-      <span class="nav-btn-icon">👤</span>
-      <span>我的</span>
+    <button class="nav-btn" id="nav-my" onclick="switchView('my')">
+      <span class="nav-icon">👤</span><span>我的</span>
     </button>
   </div>
 </div>
@@ -1022,82 +360,270 @@ body {
   <div class="modal-card" id="modalCard">
     <div class="modal-emoji" id="modalEmoji">🎉</div>
     <div class="modal-title" id="modalTitle">打卡成功！</div>
-    <div class="modal-subtitle" id="modalSubtitle">太棒了！第1天完成！</div>
-    <button class="modal-btn" onclick="closeModal()">继续加油 💪</button>
+    <div class="modal-subtitle" id="modalSubtitle">太棒了！</div>
+    <button class="modal-btn" onclick="closeModal()">继续 💪</button>
   </div>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
 // ─── Word Data ───────────────────────────────────────────────────────────
-const WORDS = [
+// Each word: english, means: [str], sentence: str
+const WORD_LIST = [
   // Day 1
-  [{english:'I',chinese:'我',sentence:'I am a student.'},{english:'you',chinese:'你；你们',sentence:'You are my friend.'},{english:'he',chinese:'他',sentence:'He is my father.'},{english:'she',chinese:'她',sentence:'She is my mother.'},{english:'it',chinese:'它',sentence:'It is a book.'},{english:'we',chinese:'我们',sentence:'We are in the classroom.'},{english:'they',chinese:'他们',sentence:'They are my friends.'},{english:'this',chinese:'这；这个',sentence:'This is my bag.'},{english:'that',chinese:'那；那个',sentence:'That is a window.'},{english:'what',chinese:'什么',sentence:'What is this?'},{english:'who',chinese:'谁',sentence:'Who is she?'},{english:'where',chinese:'在哪里',sentence:'Where is my pen?'},{english:'my',chinese:'我的',sentence:'This is my book.'},{english:'your',chinese:'你的',sentence:'Your bag is new.'},{english:'her',chinese:'她的',sentence:'Her name is Amy.'}],
+  {english:'I',means:['我'],sentence:'I am a student.'},
+  {english:'you',means:['你','你们'],sentence:'You are my friend.'},
+  {english:'he',means:['他'],sentence:'He is my father.'},
+  {english:'she',means:['她'],sentence:'She is my mother.'},
+  {english:'it',means:['它'],sentence:'It is a book.'},
+  {english:'we',means:['我们'],sentence:'We are in the classroom.'},
+  {english:'they',means:['他们','她们','它们'],sentence:'They are my friends.'},
+  {english:'this',means:['这','这个'],sentence:'This is my bag.'},
+  {english:'that',means:['那','那个'],sentence:'That is a window.'},
+  {english:'what',means:['什么'],sentence:'What is this?'},
+  {english:'who',means:['谁'],sentence:'Who is she?'},
+  {english:'where',means:['在哪里','到哪里'],sentence:'Where is my pen?'},
+  {english:'my',means:['我的'],sentence:'This is my book.'},
+  {english:'your',means:['你的','你们的'],sentence:'Your bag is new.'},
+  {english:'her',means:['她的'],sentence:'Her name is Amy.'},
   // Day 2
-  [{english:'how',chinese:'怎样；如何',sentence:'How are you today?'},{english:'his',chinese:'他的',sentence:'His bag is blue.'},{english:'hello',chinese:'你好',sentence:'Hello! How are you?'},{english:'hi',chinese:'嗨',sentence:'Hi! Nice to meet you!'},{english:'good',chinese:'好的',sentence:'Good morning!'},{english:'morning',chinese:'早晨',sentence:'Good morning!'},{english:'afternoon',chinese:'下午',sentence:'Good afternoon!'},{english:'evening',chinese:'傍晚',sentence:'Good evening!'},{english:'night',chinese:'夜晚',sentence:'Good night!'},{english:'nice',chinese:'美好的',sentence:'Nice to meet you!'},{english:'goodbye',chinese:'再见',sentence:'Goodbye! See you tomorrow!'},{english:'yes',chinese:'是的',sentence:'Yes, I like it.'},{english:'no',chinese:'不是',sentence:'No, I don\'t like fish.'},{english:'please',chinese:'请',sentence:'Please sit down.'},{english:'sorry',chinese:'对不起',sentence:'Sorry, I am late.'}],
+  {english:'how',means:['怎样','如何','多么'],sentence:'How are you today?'},
+  {english:'his',means:['他的'],sentence:'His bag is blue.'},
+  {english:'hello',means:['你好','喂'],sentence:'Hello! How are you?'},
+  {english:'hi',means:['嗨','你好'],sentence:'Hi! Nice to meet you!'},
+  {english:'good',means:['好的','令人愉快的'],sentence:'Good morning!'},
+  {english:'morning',means:['早晨','上午'],sentence:'Good morning!'},
+  {english:'afternoon',means:['下午'],sentence:'Good afternoon!'},
+  {english:'evening',means:['傍晚','晚上'],sentence:'Good evening!'},
+  {english:'night',means:['夜晚','夜里'],sentence:'Good night!'},
+  {english:'nice',means:['美好的','友好的'],sentence:'Nice to meet you!'},
+  {english:'goodbye',means:['再见','再会'],sentence:'Goodbye! See you tomorrow!'},
+  {english:'yes',means:['是','对','是的'],sentence:'Yes, I like it.'},
+  {english:'no',means:['不','不是','没有'],sentence:'No, I don\'t like fish.'},
+  {english:'please',means:['请','拜托'],sentence:'Please sit down.'},
+  {english:'sorry',means:['对不起','抱歉','难过的'],sentence:'Sorry, I am late.'},
   // Day 3
-  [{english:'one',chinese:'一',sentence:'I have one apple.'},{english:'two',chinese:'二',sentence:'I have two pens.'},{english:'three',chinese:'三',sentence:'Three birds on the tree.'},{english:'four',chinese:'四',sentence:'Four fish in the bowl.'},{english:'five',chinese:'五',sentence:'I am five years old.'},{english:'six',chinese:'六',sentence:'Six cats in the room.'},{english:'seven',chinese:'七',sentence:'Seven days in a week.'},{english:'eight',chinese:'八',sentence:'Eight books on the desk.'},{english:'nine',chinese:'九',sentence:'Nine students in the class.'},{english:'ten',chinese:'十',sentence:'Ten chairs in the room.'},{english:'father',chinese:'父亲',sentence:'My father is tall.'},{english:'mother',chinese:'母亲',sentence:'My mother is kind.'},{english:'brother',chinese:'兄弟',sentence:'I have one brother.'},{english:'sister',chinese:'姐妹',sentence:'My sister is pretty.'},{english:'baby',chinese:'婴儿',sentence:'The baby is cute.'}],
+  {english:'one',means:['一','一个'],sentence:'I have one apple.'},
+  {english:'two',means:['二','两个'],sentence:'I have two pens.'},
+  {english:'three',means:['三'],sentence:'Three birds on the tree.'},
+  {english:'four',means:['四'],sentence:'Four fish in the bowl.'},
+  {english:'five',means:['五'],sentence:'I am five years old.'},
+  {english:'six',means:['六'],sentence:'Six cats in the room.'},
+  {english:'seven',means:['七'],sentence:'Seven days in a week.'},
+  {english:'eight',means:['八'],sentence:'Eight books on the desk.'},
+  {english:'nine',means:['九'],sentence:'Nine students in the class.'},
+  {english:'ten',means:['十'],sentence:'Ten chairs in the room.'},
+  {english:'father',means:['父亲','爸爸'],sentence:'My father is tall.'},
+  {english:'mother',means:['母亲','妈妈'],sentence:'My mother is kind.'},
+  {english:'brother',means:['兄弟','哥哥','弟弟'],sentence:'I have one brother.'},
+  {english:'sister',means:['姐妹','姐姐','妹妹'],sentence:'My sister is pretty.'},
+  {english:'baby',means:['婴儿','宝贝'],sentence:'The baby is cute.'},
   // Day 4
-  [{english:'book',chinese:'书',sentence:'This is my book.'},{english:'pen',chinese:'钢笔',sentence:'I have a blue pen.'},{english:'pencil',chinese:'铅笔',sentence:'This is my pencil.'},{english:'ruler',chinese:'尺子',sentence:'I need a ruler.'},{english:'bag',chinese:'书包',sentence:'This is my schoolbag.'},{english:'rubber',chinese:'橡皮',sentence:'I need an eraser.'},{english:'desk',chinese:'书桌',sentence:'The desk is big.'},{english:'chair',chinese:'椅子',sentence:'Sit on the chair, please.'},{english:'door',chinese:'门',sentence:'Open the door, please.'},{english:'window',chinese:'窗户',sentence:'Close the window.'},{english:'ball',chinese:'球',sentence:'I like the red ball.'},{english:'toy',chinese:'玩具',sentence:'This is my toy.'},{english:'look',chinese:'看',sentence:'Look at the picture!'},{english:'listen',chinese:'听',sentence:'Listen to me, please.'},{english:'open',chinese:'打开',sentence:'Open the book, please.'}],
+  {english:'book',means:['书','书本'],sentence:'This is my book.'},
+  {english:'pen',means:['钢笔','笔'],sentence:'I have a blue pen.'},
+  {english:'pencil',means:['铅笔'],sentence:'This is my pencil.'},
+  {english:'ruler',means:['尺子','直尺'],sentence:'I need a ruler.'},
+  {english:'bag',means:['包','书包','袋子'],sentence:'This is my schoolbag.'},
+  {english:'rubber',means:['橡皮','橡胶'],sentence:'I need an eraser.'},
+  {english:'desk',means:['书桌','办公桌'],sentence:'The desk is big.'},
+  {english:'chair',means:['椅子'],sentence:'Sit on the chair, please.'},
+  {english:'door',means:['门'],sentence:'Open the door, please.'},
+  {english:'window',means:['窗户'],sentence:'Close the window.'},
+  {english:'ball',means:['球','球体'],sentence:'I like the red ball.'},
+  {english:'toy',means:['玩具','玩物'],sentence:'This is my toy.'},
+  {english:'look',means:['看','瞧','看起来'],sentence:'Look at the picture!'},
+  {english:'listen',means:['听','倾听'],sentence:'Listen to me, please.'},
+  {english:'open',means:['打开','张开'],sentence:'Open the book, please.'},
   // Day 5
-  [{english:'close',chinese:'关闭',sentence:'Close the door.'},{english:'go',chinese:'去',sentence:'Let\'s go!'},{english:'come',chinese:'来',sentence:'Come here, please.'},{english:'eat',chinese:'吃',sentence:'I eat rice every day.'},{english:'drink',chinese:'喝',sentence:'I drink milk in the morning.'},{english:'red',chinese:'红色',sentence:'The apple is red.'},{english:'yellow',chinese:'黄色',sentence:'The banana is yellow.'},{english:'blue',chinese:'蓝色',sentence:'The sky is blue.'},{english:'green',chinese:'绿色',sentence:'The grass is green.'},{english:'black',chinese:'黑色',sentence:'The cat is black.'},{english:'white',chinese:'白色',sentence:'The paper is white.'},{english:'stand',chinese:'站立',sentence:'Stand up, please.'},{english:'sit',chinese:'坐下',sentence:'Sit down, please.'},{english:'dad',chinese:'爸爸',sentence:'My dad is kind.'},{english:'mum',chinese:'妈妈',sentence:'I love my mum.'}],
+  {english:'close',means:['关闭','合上','近的'],sentence:'Close the door.'},
+  {english:'go',means:['去','走','离开'],sentence:'Let\'s go!'},
+  {english:'come',means:['来','来到'],sentence:'Come here, please.'},
+  {english:'eat',means:['吃','进食'],sentence:'I eat rice every day.'},
+  {english:'drink',means:['喝','饮','饮料'],sentence:'I drink milk in the morning.'},
+  {english:'red',means:['红色','红色的'],sentence:'The apple is red.'},
+  {english:'yellow',means:['黄色','黄色的'],sentence:'The banana is yellow.'},
+  {english:'blue',means:['蓝色','蓝色的'],sentence:'The sky is blue.'},
+  {english:'green',means:['绿色','绿色的'],sentence:'The grass is green.'},
+  {english:'black',means:['黑色','黑色的'],sentence:'The cat is black.'},
+  {english:'white',means:['白色','白色的'],sentence:'The paper is white.'},
+  {english:'stand',means:['站立','起立'],sentence:'Stand up, please.'},
+  {english:'sit',means:['坐','坐下'],sentence:'Sit down, please.'},
+  {english:'dad',means:['爸爸'],sentence:'My dad is kind.'},
+  {english:'mum',means:['妈妈'],sentence:'I love my mum.'},
   // Day 6
-  [{english:'grandfather',chinese:'爷爷',sentence:'My grandfather is old.'},{english:'grandmother',chinese:'奶奶',sentence:'My grandmother is kind.'},{english:'name',chinese:'名字',sentence:'What is your name?'},{english:'boy',chinese:'男孩',sentence:'The boy is my friend.'},{english:'girl',chinese:'女孩',sentence:'The girl is pretty.'},{english:'friend',chinese:'朋友',sentence:'She is my best friend.'},{english:'teacher',chinese:'老师',sentence:'She is my teacher.'},{english:'student',chinese:'学生',sentence:'I am a student.'},{english:'apple',chinese:'苹果',sentence:'I like apple.'},{english:'banana',chinese:'香蕉',sentence:'The banana is sweet.'},{english:'pear',chinese:'梨',sentence:'The pear is sweet.'},{english:'egg',chinese:'鸡蛋',sentence:'I eat an egg every day.'},{english:'milk',chinese:'牛奶',sentence:'I drink milk.'},{english:'water',chinese:'水',sentence:'I drink water.'},{english:'juice',chinese:'果汁',sentence:'I like apple juice.'}],
+  {english:'grandfather',means:['爷爷','外公','祖父'],sentence:'My grandfather is old.'},
+  {english:'grandmother',means:['奶奶','外婆','祖母'],sentence:'My grandmother is kind.'},
+  {english:'name',means:['名字','名称'],sentence:'What is your name?'},
+  {english:'boy',means:['男孩','少年'],sentence:'The boy is my friend.'},
+  {english:'girl',means:['女孩','少女'],sentence:'The girl is pretty.'},
+  {english:'friend',means:['朋友','友人'],sentence:'She is my best friend.'},
+  {english:'teacher',means:['老师','教师'],sentence:'She is my teacher.'},
+  {english:'student',means:['学生'],sentence:'I am a student.'},
+  {english:'apple',means:['苹果'],sentence:'I like apple.'},
+  {english:'banana',means:['香蕉'],sentence:'The banana is yellow.'},
+  {english:'pear',means:['梨'],sentence:'The pear is sweet.'},
+  {english:'egg',means:['鸡蛋','蛋'],sentence:'I eat an egg every day.'},
+  {english:'milk',means:['牛奶'],sentence:'I drink milk.'},
+  {english:'water',means:['水'],sentence:'I drink water.'},
+  {english:'juice',means:['果汁','汁液'],sentence:'I like apple juice.'},
   // Day 7
-  [{english:'orange',chinese:'橙子',sentence:'I drink orange juice.'},{english:'rice',chinese:'米饭',sentence:'I eat rice every day.'},{english:'bread',chinese:'面包',sentence:'I eat bread for breakfast.'},{english:'cake',chinese:'蛋糕',sentence:'I like the birthday cake.'},{english:'peach',chinese:'桃子',sentence:'The peach is sweet.'},{english:'cat',chinese:'猫',sentence:'The cat is cute.'},{english:'dog',chinese:'狗',sentence:'The dog is fun.'},{english:'bird',chinese:'鸟',sentence:'The bird can fly.'},{english:'fish',chinese:'鱼',sentence:'I like fish.'},{english:'rabbit',chinese:'兔子',sentence:'The rabbit is white.'},{english:'big',chinese:'大的',sentence:'The elephant is big.'},{english:'small',chinese:'小的',sentence:'The mouse is small.'},{english:'tall',chinese:'高的',sentence:'The boy is tall.'},{english:'short',chinese:'短的',sentence:'The girl is short.'},{english:'long',chinese:'长的',sentence:'The snake is long.'}],
+  {english:'orange',means:['橙子','橘子','橙色','橙色的'],sentence:'I drink orange juice.'},
+  {english:'rice',means:['米饭','大米'],sentence:'I eat rice every day.'},
+  {english:'bread',means:['面包'],sentence:'I eat bread for breakfast.'},
+  {english:'cake',means:['蛋糕','糕点'],sentence:'I like the birthday cake.'},
+  {english:'peach',means:['桃子'],sentence:'The peach is sweet.'},
+  {english:'cat',means:['猫','猫咪'],sentence:'The cat is cute.'},
+  {english:'dog',means:['狗','小狗'],sentence:'The dog is fun.'},
+  {english:'bird',means:['鸟','小鸟'],sentence:'The bird can fly.'},
+  {english:'fish',means:['鱼','鱼肉','钓鱼'],sentence:'I like fish.'},
+  {english:'rabbit',means:['兔子'],sentence:'The rabbit is white.'},
+  {english:'big',means:['大的','巨大的'],sentence:'The elephant is big.'},
+  {english:'small',means:['小的','年幼的'],sentence:'The mouse is small.'},
+  {english:'tall',means:['高的','高大的'],sentence:'The boy is tall.'},
+  {english:'short',means:['短的','矮的','短暂的'],sentence:'The girl is short.'},
+  {english:'long',means:['长的','长久的'],sentence:'The snake is long.'},
   // Day 8
-  [{english:'monkey',chinese:'猴子',sentence:'The monkey is funny.'},{english:'panda',chinese:'熊猫',sentence:'The panda is from China.'},{english:'tiger',chinese:'老虎',sentence:'The tiger is big.'},{english:'fat',chinese:'胖的',sentence:'The pig is fat.'},{english:'thin',chinese:'瘦的',sentence:'The man is thin.'},{english:'day',chinese:'日子',sentence:'What a nice day!'},{english:'today',chinese:'今天',sentence:'Today is a good day.'},{english:'hot',chinese:'热的',sentence:'It is very hot today.'},{english:'cold',chinese:'冷的',sentence:'The water is cold.'},{english:'sunny',chinese:'晴朗的',sentence:'It is sunny today.'},{english:'read',chinese:'读',sentence:'I read books every day.'},{english:'write',chinese:'写',sentence:'I write with a pen.'},{english:'draw',chinese:'画',sentence:'I draw pictures.'},{english:'sing',chinese:'唱歌',sentence:'I can sing a song.'},{english:'dance',chinese:'跳舞',sentence:'I like to dance.'}],
+  {english:'monkey',means:['猴子'],sentence:'The monkey is funny.'},
+  {english:'panda',means:['熊猫'],sentence:'The panda is from China.'},
+  {english:'tiger',means:['老虎'],sentence:'The tiger is big.'},
+  {english:'fat',means:['胖的','肥的'],sentence:'The pig is fat.'},
+  {english:'thin',means:['瘦的','薄的','细的'],sentence:'The man is thin.'},
+  {english:'day',means:['白天','日子','一天'],sentence:'What a nice day!'},
+  {english:'today',means:['今天','今日'],sentence:'Today is a good day.'},
+  {english:'hot',means:['热的','炎热的'],sentence:'It is very hot today.'},
+  {english:'cold',means:['冷的','寒冷的','感冒'],sentence:'The water is cold.'},
+  {english:'sunny',means:['晴朗的','阳光充足的'],sentence:'It is sunny today.'},
+  {english:'read',means:['读','阅读','朗读'],sentence:'I read books every day.'},
+  {english:'write',means:['写','书写'],sentence:'I write with a pen.'},
+  {english:'draw',means:['画','绘画'],sentence:'I draw pictures.'},
+  {english:'sing',means:['唱歌','歌唱'],sentence:'I can sing a song.'},
+  {english:'dance',means:['跳舞','舞蹈'],sentence:'I like to dance.'},
   // Day 9
-  [{english:'run',chinese:'跑',sentence:'I run every morning.'},{english:'jump',chinese:'跳',sentence:'The frog can jump.'},{english:'swim',chinese:'游泳',sentence:'I can swim.'},{english:'rainy',chinese:'下雨的',sentence:'It is rainy today.'},{english:'classmate',chinese:'同学',sentence:'He is my classmate.'},{english:'when',chinese:'什么时候',sentence:'When is your birthday?'},{english:'whose',chinese:'谁的',sentence:'Whose book is this?'},{english:'which',chinese:'哪一个',sentence:'Which one do you like?'},{english:'why',chinese:'为什么',sentence:'Why are you happy?'},{english:'how many',chinese:'多少',sentence:'How many apples?'},{english:'thing',chinese:'东西',sentence:'What is this thing?'},{english:'place',chinese:'地方',sentence:'What is this place?'},{english:'people',chinese:'人们',sentence:'Many people are here.'},{english:'child',chinese:'小孩',sentence:'The child is cute.'},{english:'family',chinese:'家庭',sentence:'I love my family.'}],
+  {english:'run',means:['跑','奔跑'],sentence:'I run every morning.'},
+  {english:'jump',means:['跳','跳跃'],sentence:'The frog can jump.'},
+  {english:'swim',means:['游泳','游动'],sentence:'I can swim.'},
+  {english:'rainy',means:['下雨的','多雨的'],sentence:'It is rainy today.'},
+  {english:'classmate',means:['同班同学'],sentence:'He is my classmate.'},
+  {english:'when',means:['什么时候','何时'],sentence:'When is your birthday?'},
+  {english:'whose',means:['谁的'],sentence:'Whose book is this?'},
+  {english:'which',means:['哪一个','哪一些'],sentence:'Which one do you like?'},
+  {english:'why',means:['为什么'],sentence:'Why are you happy?'},
+  {english:'how many',means:['多少（数量）'],sentence:'How many apples?'},
+  {english:'thing',means:['东西','事物','事情'],sentence:'What is this thing?'},
+  {english:'place',means:['地方','地点'],sentence:'What is this place?'},
+  {english:'people',means:['人们','人民'],sentence:'Many people are here.'},
+  {english:'child',means:['小孩','儿童'],sentence:'The child is cute.'},
+  {english:'family',means:['家庭','家人','家族'],sentence:'I love my family.'},
   // Day 10
-  [{english:'children',chinese:'孩子们',sentence:'The children are playing.'},{english:'school',chinese:'学校',sentence:'I go to school every day.'},{english:'classroom',chinese:'教室',sentence:'We are in the classroom.'},{english:'home',chinese:'家',sentence:'I go home after school.'},{english:'room',chinese:'房间',sentence:'This is my room.'},{english:'clothes',chinese:'衣服',sentence:'I wear nice clothes.'},{english:'shirt',chinese:'衬衫',sentence:'I wear a blue shirt.'},{english:'skirt',chinese:'短裙',sentence:'The skirt is pretty.'},{english:'dress',chinese:'连衣裙',sentence:'She wears a red dress.'},{english:'shoes',chinese:'鞋子',sentence:'I have new shoes.'},{english:'socks',chinese:'袜子',sentence:'I wear white socks.'},{english:'hat',chinese:'帽子',sentence:'I wear a hat in the sun.'},{english:'car',chinese:'小汽车',sentence:'My dad has a car.'},{english:'bus',chinese:'公共汽车',sentence:'I go to school by bus.'},{english:'bike',chinese:'自行车',sentence:'I ride a bike.'}],
+  {english:'children',means:['孩子们'],sentence:'The children are playing.'},
+  {english:'school',means:['学校','上学'],sentence:'I go to school every day.'},
+  {english:'classroom',means:['教室'],sentence:'We are in the classroom.'},
+  {english:'home',means:['家','回家'],sentence:'I go home after school.'},
+  {english:'room',means:['房间','空间'],sentence:'This is my room.'},
+  {english:'clothes',means:['衣服','服饰'],sentence:'I wear nice clothes.'},
+  {english:'shirt',means:['衬衫','衬衣'],sentence:'I wear a blue shirt.'},
+  {english:'skirt',means:['短裙','裙子'],sentence:'The skirt is pretty.'},
+  {english:'dress',means:['连衣裙','长裙','穿衣服'],sentence:'She wears a red dress.'},
+  {english:'shoes',means:['鞋子'],sentence:'I have new shoes.'},
+  {english:'socks',means:['袜子'],sentence:'I wear white socks.'},
+  {english:'hat',means:['帽子','礼帽'],sentence:'I wear a hat in the sun.'},
+  {english:'car',means:['小汽车','轿车'],sentence:'My dad has a car.'},
+  {english:'bus',means:['公共汽车','巴士'],sentence:'I go to school by bus.'},
+  {english:'bike',means:['自行车','脚踏车'],sentence:'I ride a bike.'},
   // Day 11
-  [{english:'train',chinese:'火车',sentence:'I like the train.'},{english:'plane',chinese:'飞机',sentence:'I want to fly in a plane.'},{english:'ship',chinese:'轮船',sentence:'The ship is big.'},{english:'schoolbag',chinese:'书包',sentence:'I carry my schoolbag.'},{english:'pencil-box',chinese:'文具盒',sentence:'I open my pencil-box.'},{english:'crayon',chinese:'蜡笔',sentence:'I have a red crayon.'},{english:'glue',chinese:'胶水',sentence:'I need some glue.'},{english:'scissors',chinese:'剪刀',sentence:'I cut with scissors.'},{english:'have',chinese:'有',sentence:'I have a cat.'},{english:'like',chinese:'喜欢',sentence:'I like fish.'},{english:'want',chinese:'想要',sentence:'I want to go home.'},{english:'need',chinese:'需要',sentence:'I need a pen.'},{english:'can',chinese:'能',sentence:'I can swim.'},{english:'must',chinese:'必须',sentence:'I must go now.'},{english:'play',chinese:'玩',sentence:'I play with my friend.'}],
+  {english:'train',means:['火车'],sentence:'I like the train.'},
+  {english:'plane',means:['飞机'],sentence:'I want to fly in a plane.'},
+  {english:'ship',means:['轮船','船'],sentence:'The ship is big.'},
+  {english:'schoolbag',means:['书包'],sentence:'I carry my schoolbag.'},
+  {english:'pencil-box',means:['文具盒'],sentence:'I open my pencil-box.'},
+  {english:'crayon',means:['蜡笔'],sentence:'I have a red crayon.'},
+  {english:'marker',means:['马克笔','记号笔'],sentence:'I write with a marker.'},
+  {english:'glue',means:['胶水','粘贴'],sentence:'I need some glue.'},
+  {english:'scissors',means:['剪刀'],sentence:'I cut with scissors.'},
+  {english:'have',means:['有','拥有','吃','喝'],sentence:'I have a cat.'},
+  {english:'like',means:['喜欢','喜爱','像'],sentence:'I like fish.'},
+  {english:'want',means:['想要','希望'],sentence:'I want to go home.'},
+  {english:'need',means:['需要','必需'],sentence:'I need a pen.'},
+  {english:'can',means:['能','会','可以'],sentence:'I can swim.'},
+  {english:'must',means:['必须','一定'],sentence:'I must go now.'},
   // Day 12
-  [{english:'help',chinese:'帮助',sentence:'Can you help me?'},{english:'meet',chinese:'遇见',sentence:'Nice to meet you!'},{english:'call',chinese:'称呼',sentence:'Call me, please.'},{english:'in',chinese:'在里面',sentence:'I am in the room.'},{english:'on',chinese:'在上面',sentence:'The book is on the desk.'},{english:'under',chinese:'在下面',sentence:'The cat is under the table.'},{english:'beside',chinese:'在旁边',sentence:'The chair is beside the desk.'},{english:'near',chinese:'在附近',sentence:'The school is near my home.'},{english:'at',chinese:'在',sentence:'I am at school.'},{english:'to',chinese:'到',sentence:'I go to school every day.'},{english:'from',chinese:'来自',sentence:'I am from Shenzhen.'},{english:'with',chinese:'和...一起',sentence:'I go with my friend.'},{english:'marker',chinese:'马克笔',sentence:'I write with a marker.'},{english:'thank you',chinese:'谢谢',sentence:'Thank you very much.'},{english:'goodbye',chinese:'再见',sentence:'Goodbye! See you tomorrow!'}]
+  {english:'play',means:['玩','玩耍','演奏'],sentence:'I play with my friend.'},
+  {english:'help',means:['帮助','帮忙'],sentence:'Can you help me?'},
+  {english:'meet',means:['遇见','会面'],sentence:'Nice to meet you!'},
+  {english:'call',means:['打电话','称呼','呼叫'],sentence:'Call me, please.'},
+  {english:'in',means:['在…里面','在（时段）内'],sentence:'I am in the room.'},
+  {english:'on',means:['在…上面','在（某天）'],sentence:'The book is on the desk.'},
+  {english:'under',means:['在…下面'],sentence:'The cat is under the table.'},
+  {english:'beside',means:['在…旁边'],sentence:'The chair is beside the desk.'},
+  {english:'near',means:['在…附近','靠近'],sentence:'The school is near my home.'},
+  {english:'at',means:['在（某地/某时刻）'],sentence:'I am at school.'},
+  {english:'to',means:['到','向','往','给'],sentence:'I go to school every day.'},
+  {english:'from',means:['从…来','来自'],sentence:'I am from Shenzhen.'},
+  {english:'with',means:['和…一起','带有','使用'],sentence:'I go with my friend.'},
+  {english:'thank you',means:['谢谢你','多谢'],sentence:'Thank you very much.'},
+  {english:'goodbye',means:['再见','再会'],sentence:'Goodbye! See you tomorrow!'},
 ];
 
-// Sentence map for quick lookup
-const SENTENCE_MAP = {};
-WORDS.forEach(day => day.forEach(w => { SENTENCE_MAP[w.english.toLowerCase()] = w.sentence; }));
+// Day definitions
+const DAYS = [
+  { day:1,  title:'第1天', sub:'每天15个新词', words: WORD_LIST.slice(0,15) },
+  { day:2,  title:'第2天', sub:'每天15个新词', words: WORD_LIST.slice(15,30) },
+  { day:3,  title:'第3天', sub:'每天15个新词', words: WORD_LIST.slice(30,45) },
+  { day:4,  title:'第4天', sub:'每天15个新词', words: WORD_LIST.slice(45,60) },
+  { day:5,  title:'第5天', sub:'每天15个新词', words: WORD_LIST.slice(60,75) },
+  { day:6,  title:'第6天', sub:'每天15个新词', words: WORD_LIST.slice(75,90) },
+  { day:7,  title:'第7天', sub:'每天15个新词', words: WORD_LIST.slice(90,105) },
+  { day:8,  title:'第8天', sub:'每天15个新词', words: WORD_LIST.slice(105,120) },
+  { day:9,  title:'第9天', sub:'每天15个新词', words: WORD_LIST.slice(120,135) },
+  { day:10, title:'第10天', sub:'每天15个新词', words: WORD_LIST.slice(135,150) },
+  { day:11, title:'第11天', sub:'每天15个新词', words: WORD_LIST.slice(150,165) },
+  { day:12, title:'第12天', sub:'每天15个新词', words: WORD_LIST.slice(165,180) },
+  { day:13, title:'第13天', sub:'整体复习：第1-4天', words: WORD_LIST.slice(0,60), type:'review' },
+  { day:14, title:'第14天', sub:'整体复习：第5-8天', words: WORD_LIST.slice(60,120), type:'review' },
+  { day:15, title:'第15天', sub:'整体复习：第9-12天', words: WORD_LIST.slice(120,180), type:'review' },
+  { day:16, title:'第16天', sub:'高频词专项', words: WORD_LIST.slice(0,30), type:'special' },
+  { day:17, title:'第17天', sub:'代词+疑问词专项', words: WORD_LIST.filter((_,i)=>[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,32,33,34,35,36,37,38,39,40].includes(i)), type:'special' },
+  { day:18, title:'第18天', sub:'食物+动物专项', words: WORD_LIST.filter((_,i)=>[75,76,77,78,79,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104].includes(i)), type:'special' },
+  { day:19, title:'第19天', sub:'文具+交通专项', words: WORD_LIST.filter((_,i)=>[45,46,47,48,49,50,51,52,53,54,55,56,57,135,136,137,138,139,150,151,152].includes(i)), type:'special' },
+  { day:20, title:'第20天', sub:'动词+介词专项', words: WORD_LIST.filter((_,i)=>[57,58,59,60,61,62,63,64,65,66,67,68,69,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179].includes(i)), type:'special' },
+  { day:21, title:'第21天', sub:'终极总听写', words: (()=>{const a=[...WORD_LIST];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a.slice(0,50);})(), type:'final' },
+];
 
-// ─── State ────────────────────────────────────────────────────────────────
+// ─── State ──────────────────────────────────────────────────────────────
 let state = {
   currentDay: 1,
+  unlockedDays: [1,2,3],     // 每天最多解锁3天
   checkedInDays: Array(21).fill(0),
-  wrongWords: [],
-  checkedInToday: false,
-  ebbinghaus: {}, // word -> [lastDate, intervalDays]
-  currentView: 'learn'
+  wrongWords: [],            // {english, means, sentence}
+  studyIndex: 0,
+  studyKnown: [],            // bool[]
+  dictIndex: 0,
+  dictCorrect: 0,
+  dictTotal: 0,
+  dictAnswered: false,
+  learnedSet: new Set(),    // set of english, for "不会" tracking
 };
 
-// Study mode state
-let studyGroupIndex = 0;
-let studyKnown = []; // true/false per word
-
-// Dictation state
-let dictIndex = 0;
-let dictCorrect = 0;
-let dictTotal = 0;
-let dictAnswered = false;
-
-// Load from localStorage
-function loadState() {
+// ─── Storage ────────────────────────────────────────────────────────────
+function load() {
   try {
-    const s = localStorage.getItem('xf_english_state');
+    const s = localStorage.getItem('xf_v2');
     if (s) {
-      const parsed = JSON.parse(s);
-      state = { ...state, ...parsed };
-      // Re-derive checkedInToday from checkedInDays and current day
-      state.checkedInToday = state.checkedInDays[state.currentDay - 1] === 1;
+      const p = JSON.parse(s);
+      state = { ...state, ...p };
+      state.learnedSet = new Set(state.learnedSet);
     }
   } catch(e) {}
 }
-
-function saveState() {
-  try { localStorage.setItem('xf_english_state', JSON.stringify(state)); } catch(e) {}
+function save() {
+  try {
+    const s = {...state, learnedSet: [...state.learnedSet]};
+    localStorage.setItem('xf_v2', JSON.stringify(s));
+  } catch(e) {}
 }
-
-function save() { saveState(); }
+load();
 
 // ─── TTS ───────────────────────────────────────────────────────────────
 function speak(text) {
@@ -1109,26 +635,33 @@ function speak(text) {
   window.speechSynthesis.speak(u);
 }
 
-// ─── Init ────────────────────────────────────────────────────────────────
-loadState();
+// ─── Helpers ───────────────────────────────────────────────────────────
+function $(s) { return document.querySelector(s); }
+function $$(s) { return document.querySelectorAll(s); }
 
-$(() => {
-  renderProgressTrack();
-  renderStudyGroup();
-  renderMyPage();
-  updateDayCounter();
+function isUnlocked(day) {
+  return state.unlockedDays.includes(day);
+}
 
-  // Dictation enter key
-  $('#dictInput').on('keypress', e => { if (e.key === 'Enter') submitDict(); });
+function getCurrentDayObj() {
+  return DAYS[state.currentDay - 1];
+}
 
-  // Checkin button state
-  updateCheckinBtn();
-});
+// ─── Unlock Logic ───────────────────────────────────────────────────────
+function tryUnlockNext() {
+  const next = state.currentDay + 1;
+  if (next > 21) return;
+  if (!state.unlockedDays.includes(next)) {
+    // keep unlocked days to max 3
+    if (state.unlockedDays.length >= 3) {
+      state.unlockedDays.shift(); // remove oldest
+    }
+    state.unlockedDays.push(next);
+    save();
+  }
+}
 
-function $ (sel) { return document.querySelector(sel); }
-function $$(sel) { return document.querySelectorAll(sel); }
-
-// ─── Top Progress Bar ────────────────────────────────────────────────────
+// ─── Progress Track ─────────────────────────────────────────────────────
 function renderProgressTrack() {
   const track = $('#progressTrack');
   track.innerHTML = '';
@@ -1136,405 +669,385 @@ function renderProgressTrack() {
     const dot = document.createElement('div');
     dot.className = 'day-dot';
     dot.title = '第' + i + '天';
-    if (state.checkedInDays[i - 1] === 1) dot.classList.add('done');
+    if (state.checkedInDays[i-1] === 1) dot.classList.add('done');
     if (i === state.currentDay) dot.classList.add('today');
-    dot.onclick = () => jumpToDay(i);
+    if (!isUnlocked(i)) dot.classList.add('locked');
+    if (i === state.currentDay) dot.classList.add('active-day');
     track.appendChild(dot);
   }
-}
-
-function jumpToDay(day) {
-  state.currentDay = day;
-  state.checkedInToday = state.checkedInDays[day - 1] === 1;
-  updateDayCounter();
-  renderStudyGroup();
-  updateCheckinBtn();
-  switchView('learn');
-}
-
-function updateDayCounter() {
   $('#dayCounter').textContent = '第' + state.currentDay + '天';
-  $('#studySectionTitle').textContent = '第' + state.currentDay + '天 · 学习模式';
-  $('#dictDayLabel').textContent = '第' + state.currentDay + '天 · 听写';
+}
+
+// ─── Learn View ─────────────────────────────────────────────────────────
+function renderLearnView() {
+  const dayObj = getCurrentDayObj();
+  $('#dayTitle').textContent = dayObj.title;
+  $('#daySub').textContent = dayObj.sub;
+
+  // task info
+  if (dayObj.type === 'review' || dayObj.type === 'special' || dayObj.type === 'final') {
+    $('#taskInfo').style.display = 'block';
+    $('#taskTitle').textContent = dayObj.sub;
+    $('#taskSub').textContent = dayObj.words.length + '个单词';
+  } else {
+    $('#taskInfo').style.display = 'none';
+  }
+
+  // checkin banner
+  if (state.checkedInDays[state.currentDay-1] === 1) {
+    $('#checkinBanner').style.background = 'linear-gradient(135deg, #5DCA5D, #7DD87D)';
+    $('#checkinTitle').textContent = '今日已打卡 ✅';
+    $('#checkinBtn').textContent = '已完成！';
+    $('#checkinBtn').classList.add('done');
+    $('#checkinBtn').disabled = true;
+  } else {
+    $('#checkinBanner').style.background = 'linear-gradient(135deg, var(--primary), #7CB8FF)';
+    $('#checkinTitle').textContent = '今日打卡任务';
+    $('#checkinBtn').textContent = '🎯 我要打卡！';
+    $('#checkinBtn').classList.remove('done');
+    $('#checkinBtn').disabled = false;
+  }
+
+  // init study if needed
+  if (state.studyKnown.length !== dayObj.words.length) {
+    state.studyKnown = new Array(dayObj.words.length).fill(false);
+    state.studyIndex = 0;
+  }
+
+  renderStudyProgress();
+  renderStudyWord();
+  renderLearnActions();
   renderProgressTrack();
 }
 
-// ─── Study Mode ───────────────────────────────────────────────────────────
-function renderStudyGroup() {
-  studyGroupIndex = 0;
-  studyKnown = Array(15).fill(false);
-  renderStudyDots();
-  renderStudyCards();
-  updateGroupLabel();
-}
-
-function renderStudyDots() {
-  const container = $('#studyProgressDots');
+function renderStudyProgress() {
+  const container = $('#studyProgress');
   container.innerHTML = '';
-  for (let i = 0; i < 15; i++) {
+  const words = getCurrentDayObj().words;
+  for (let i = 0; i < words.length; i++) {
     const dot = document.createElement('div');
     dot.className = 'study-dot';
-    if (i === studyGroupIndex) dot.classList.add('active');
-    if (studyKnown[i]) dot.classList.add('done');
+    if (i === state.studyIndex) dot.classList.add('active');
+    if (state.studyKnown[i]) dot.classList.add('done');
     container.appendChild(dot);
   }
 }
 
-function updateGroupLabel() {
-  const start = studyGroupIndex * 3;
-  $('#studyGroupLabel').textContent = '第 ' + (start + 1) + '-' + Math.min(start + 3, 15) + ' 词';
+function renderStudyWord() {
+  const words = getCurrentDayObj().words;
+  const area = $('#wordCardArea');
+
+  if (state.studyIndex >= words.length) {
+    // All words browsed
+    area.innerHTML = `
+      <div class="study-done">
+        <div class="study-done-emoji">✅</div>
+        <div class="study-done-title">浏览完成！</div>
+        <div class="study-done-sub">开始听写测试吧</div>
+        <button class="dict-btn" onclick="switchView('dict'); initDict()">开始听写 →</button>
+      </div>`;
+    $('#learnActions').innerHTML = '';
+    return;
+  }
+
+  const w = words[state.studyIndex];
+  area.innerHTML = `
+    <div class="word-card">
+      <div class="word-card-top">
+        <button class="speak-btn" onclick="speak('${w.english.replace(/'/g,"\\'")}')">🔊</button>
+        <span style="font-size:13px;color:var(--muted);margin-top:auto">${state.studyIndex+1} / ${words.length}</span>
+      </div>
+      <div class="word-en">${w.english}</div>
+      <div class="word-divider"></div>
+      <div class="word-means">
+        ${w.means.map(m=>`<div class="word-mean"><span class="word-mean-dot"></span>${m}</div>`).join('')}
+      </div>
+      <div class="word-sentence">"${w.sentence}"</div>
+    </div>`;
 }
 
-function renderStudyCards() {
-  const dayWords = WORDS[state.currentDay - 1];
-  const start = studyGroupIndex * 3;
-  const groupWords = dayWords.slice(start, start + 3);
-
-  const grid = $('#wordGroupGrid');
-  grid.innerHTML = '';
-
-  groupWords.forEach((w, i) => {
-    const card = document.createElement('div');
-    card.className = 'word-mini-card';
-    if (studyKnown[start + i]) {
-      card.classList.add(studyKnown[start + i] === true ? 'known' : 'unknown');
-    }
-
-    const en = document.createElement('div');
-    en.className = 'word-mini-en';
-    en.textContent = w.english;
-
-    const zh = document.createElement('div');
-    zh.className = 'word-mini-zh';
-    zh.textContent = w.chinese;
-
-    card.appendChild(en);
-    card.appendChild(zh);
-    card.onclick = () => speak(w.english);
-    grid.appendChild(card);
-  });
+function renderLearnActions() {
+  const words = getCurrentDayObj().words;
+  if (state.studyIndex >= words.length) {
+    $('#learnActions').innerHTML = '';
+    return;
+  }
+  $('#learnActions').innerHTML = `
+    <div class="btn-row">
+      <button class="btn btn-knew" onclick="markKnown(true)">认识了</button>
+      <button class="btn btn-forgot" onclick="markKnown(false)">不会</button>
+    </div>`;
 }
 
 function markKnown(known) {
-  const idx = studyGroupIndex * 3;
-  if (studyKnown[idx] !== known) {
-    studyKnown[idx] = known;
-    if (!known) {
-      // Add to wrong words
-      const w = WORDS[state.currentDay - 1][idx];
-      if (!state.wrongWords.find(x => x.english === w.english)) {
-        state.wrongWords.push(w);
-        save();
-      }
-    }
-  }
-
-  studyGroupIndex++;
-  renderStudyDots();
-
-  if (studyGroupIndex >= 5) {
-    // Done with this group
-    showStudyDone();
-  } else {
-    renderStudyCards();
-    updateGroupLabel();
-  }
-}
-
-function showStudyDone() {
-  $('#studyGroupLabel').textContent = '✅ 本日学习完成！';
-  $('#wordGroupGrid').innerHTML = '';
-  const grid = $('#wordGroupGrid');
-  const dayWords = WORDS[state.currentDay - 1];
-  // Show 3 random words as summary
-  const sample = dayWords.slice(0, 6);
-  grid.style.display = 'grid';
-  grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  sample.forEach(w => {
-    const card = document.createElement('div');
-    card.className = 'word-mini-card known';
-    card.innerHTML = '<div class="word-mini-en">' + w.english + '</div><div class="word-mini-zh">' + w.chinese + '</div>';
-    grid.appendChild(card);
-  });
-}
-
-function goToDictation() {
-  switchView('dictation');
-  initDictation();
-}
-
-// ─── Dictation Mode ────────────────────────────────────────────────────────
-function initDictation() {
-  dictIndex = 0;
-  dictCorrect = 0;
-  dictTotal = WORDS[state.currentDay - 1].length;
-  dictAnswered = false;
-  showDictWord();
-  updateDictProgress();
-  $('#dictInput').value = '';
-  $('#dictInput').disabled = false;
-  $('#dictSubmit').style.display = '';
-  $('#dictNextBtn').style.display = 'none';
-  $('#dictAnswer').classList.remove('show', 'correct-answer', 'wrong-answer');
-  $('#dictInput').classList.remove('correct', 'wrong');
-}
-
-function showDictWord() {
-  const w = WORDS[state.currentDay - 1][dictIndex];
-  $('#dictChinese').textContent = w.chinese;
-  $('#dictAnswer').classList.remove('show', 'correct-answer', 'wrong-answer');
-  $('#dictInput').classList.remove('correct', 'wrong');
-  $('#dictInput').value = '';
-  $('#dictInput').disabled = false;
-  $('#dictInput').focus();
-  $('#dictSubmit').style.display = '';
-  $('#dictNextBtn').style.display = 'none';
-  dictAnswered = false;
-}
-
-function submitDict() {
-  if (dictAnswered) return;
-  const w = WORDS[state.currentDay - 1][dictIndex];
-  const input = $('#dictInput').value.trim().toLowerCase();
-  const correct = w.english.toLowerCase();
-
-  dictAnswered = true;
-  $('#dictInput').disabled = true;
-  $('#dictSubmit').style.display = 'none';
-
-  const isCorrect = input === correct;
-  if (isCorrect) {
-    dictCorrect++;
-    $('#dictInput').classList.add('correct');
-    $('#dictAnswer').classList.add('show', 'correct-answer');
-    $('#dictAnswer').classList.remove('wrong-answer');
-    $('#answerEnglish').classList.remove('wrong');
-    $('#answerEnglish').textContent = w.english;
-    $('#answerChinese').textContent = w.chinese;
-  } else {
-    $('#dictInput').classList.add('wrong');
-    $('#dictAnswer').classList.add('show', 'wrong-answer');
-    $('#dictAnswer').classList.remove('correct-answer');
-    $('#answerEnglish').classList.add('wrong');
-    $('#answerEnglish').textContent = correct;
-    $('#answerChinese').textContent = w.chinese;
-    // Add to wrong words
+  if (!known) {
+    const w = getCurrentDayObj().words[state.studyIndex];
     if (!state.wrongWords.find(x => x.english === w.english)) {
       state.wrongWords.push(w);
       save();
     }
   }
+  state.studyKnown[state.studyIndex] = known;
+  state.studyIndex++;
+  save();
+  renderStudyProgress();
+  renderStudyWord();
+  renderLearnActions();
+}
 
-  updateDictProgress();
+// ─── Dictation ───────────────────────────────────────────────────────────
+function initDict() {
+  const words = getCurrentDayObj().words;
+  state.dictIndex = 0;
+  state.dictCorrect = 0;
+  state.dictTotal = words.length;
+  state.dictAnswered = false;
+  state.learnedSet = new Set();
+  $('#dictDayLabel').textContent = getCurrentDayObj().title + ' · 听写';
+  $('#dictProgressText').textContent = '0 / ' + state.dictTotal + ' 正确';
+  $('#dictProgressBar').style.width = '0%';
+  showDictWord();
+}
+
+function showDictWord() {
+  const words = getCurrentDayObj().words;
+  const w = words[state.dictIndex];
+  $('#dictChinese').textContent = w.means[0];
+  $('#dictInput').value = '';
+  $('#dictInput').disabled = false;
+  $('#dictInput').classList.remove('correct','wrong');
+  $('#dictAnswer').classList.remove('show','correct-a','wrong-a');
+  $('#dictSubmitBtn').style.display = '';
+  $('#dictNextBtn').style.display = 'none';
+  state.dictAnswered = false;
+  $('#dictInput').focus();
+}
+
+const CORRECT_MSGS = ['对了！','不错！','继续保持！','厉害！','答对了！','正确！'];
+const WRONG_MSGS = ['没关系，再想想。','再试一次。'];
+
+function submitDict() {
+  if (state.dictAnswered) return;
+  const words = getCurrentDayObj().words;
+  const w = words[state.dictIndex];
+  const input = $('#dictInput').value.trim().toLowerCase();
+  const correct = w.english.toLowerCase();
+  state.dictAnswered = true;
+  $('#dictInput').disabled = true;
+  $('#dictSubmitBtn').style.display = 'none';
+
+  const isCorrect = input === correct;
+  if (isCorrect) {
+    state.dictCorrect++;
+    $('#dictInput').classList.add('correct');
+    $('#dictAnswer').classList.add('show','correct-a');
+    $('#dictAnswer').classList.remove('wrong-a');
+    $('#answerEn').textContent = w.english;
+    $('#answerEn').className = 'answer-en correct-c';
+    $('#answerZh').innerHTML = w.means.join('；');
+    $('#answerMsg').textContent = CORRECT_MSGS[Math.floor(Math.random()*CORRECT_MSGS.length)];
+  } else {
+    $('#dictInput').classList.add('wrong');
+    $('#dictAnswer').classList.add('show','wrong-a');
+    $('#dictAnswer').classList.remove('correct-a');
+    $('#answerEn').textContent = correct;
+    $('#answerEn').className = 'answer-en wrong-c';
+    $('#answerZh').innerHTML = w.means.join('；');
+    $('#answerMsg').textContent = WRONG_MSGS[Math.floor(Math.random()*WRONG_MSGS.length)];
+    if (!state.wrongWords.find(x=>x.english===w.english)) {
+      state.wrongWords.push(w);
+      save();
+    }
+  }
+
+  const pct = state.dictTotal > 0 ? (state.dictCorrect / state.dictTotal * 100) : 0;
+  $('#dictProgressBar').style.width = pct + '%';
+  $('#dictProgressText').textContent = state.dictCorrect + ' / ' + state.dictTotal + ' 正确';
   $('#dictNextBtn').style.display = '';
 }
 
 function nextDict() {
-  dictIndex++;
-  if (dictIndex >= dictTotal) {
+  state.dictIndex++;
+  const words = getCurrentDayObj().words;
+  if (state.dictIndex >= words.length) {
     showDictResult();
   } else {
     showDictWord();
-    updateDictProgress();
   }
-}
-
-function updateDictProgress() {
-  const pct = dictTotal > 0 ? (dictCorrect / dictIndex * 100) || 0 : 0;
-  $('#dictProgressBar').style.width = pct + '%';
-  $('#dictProgress').textContent = dictCorrect + ' / ' + dictTotal + ' 正确';
 }
 
 function showDictResult() {
-  const rate = dictTotal > 0 ? Math.round(dictCorrect / dictTotal * 100) : 0;
-  const day = state.currentDay;
+  const dayObj = getCurrentDayObj();
+  const rate = state.dictTotal > 0 ? Math.round(state.dictCorrect / state.dictTotal * 100) : 0;
+  const emoji = rate >= 90 ? '🌟' : rate >= 70 ? '💪' : rate >= 60 ? '👍' : '💡';
+  const title = rate >= 80 ? '太棒了！' : rate >= 60 ? '不错！' : '继续加油！';
 
-  $('#view-dictation').innerHTML = `
+  $('#view-dict').innerHTML = `
     <div class="result-card">
-      <div class="result-emoji">${rate >= 80 ? '🌟' : rate >= 60 ? '👍' : '💪'}</div>
-      <div class="result-title">${rate >= 80 ? '太棒了！' : rate >= 60 ? '不错哦！' : '继续加油！'}</div>
-      <div class="result-subtitle">第${day}天听写完成</div>
+      <div class="result-emoji">${emoji}</div>
+      <div class="result-title">${title}</div>
+      <div class="result-subtitle">${dayObj.title}听写完成</div>
       <div class="result-stats">
-        <div class="result-stat">
-          <div class="result-stat-num">${dictCorrect}</div>
-          <div class="result-stat-label">正确</div>
-        </div>
-        <div class="result-stat">
-          <div class="result-stat-num">${dictTotal - dictCorrect}</div>
-          <div class="result-stat-label">错误</div>
-        </div>
-        <div class="result-stat">
-          <div class="result-stat-num">${rate}%</div>
-          <div class="result-stat-label">正确率</div>
-        </div>
+        <div class="result-stat"><div class="result-stat-num">${state.dictCorrect}</div><div class="result-stat-label">正确</div></div>
+        <div class="result-stat"><div class="result-stat-num">${state.dictTotal - state.dictCorrect}</div><div class="result-stat-label">错误</div></div>
+        <div class="result-stat"><div class="result-stat-num">${rate}%</div><div class="result-stat-label">正确率</div></div>
       </div>
-      <button class="btn btn-next" onclick="switchView('learn'); initDictation();">返回学习</button>
-    </div>
-  `;
+      <button class="dict-btn" onclick="switchView('learn')" style="margin-top:8px">返回学习</button>
+    </div>`;
 }
 
-// ─── Checkin ──────────────────────────────────────────────────────────────
-function updateCheckinBtn() {
-  const btn = $('#checkinBtn');
-  if (state.checkedInToday) {
-    btn.textContent = '✅ 今日已打卡';
-    btn.disabled = true;
-  } else {
-    btn.textContent = '🎉 我要打卡！';
-    btn.disabled = false;
-  }
-}
-
+// ─── Checkin ─────────────────────────────────────────────────────────────
 function doCheckin() {
-  if (state.checkedInToday) return;
-  state.checkedInDays[state.currentDay - 1] = 1;
-  state.checkedInToday = true;
+  if (state.checkedInDays[state.currentDay-1] === 1) return;
+  state.checkedInDays[state.currentDay-1] = 1;
+  tryUnlockNext();
   save();
-  renderProgressTrack();
-  updateCheckinBtn();
+  renderLearnView();
   renderMyPage();
-  showModal('🎉', '第' + state.currentDay + '天打卡成功！', '太棒了！坚持就是胜利！');
-
-  // Advance to next day if applicable
-  if (state.currentDay < 21) {
-    // Don't auto-advance; let user continue
-  }
+  showModal('🎉', state.currentDay + '天打卡完成！', '坚持下去，明天继续！');
 }
 
-// ─── View Switching ────────────────────────────────────────────────────────
-function switchView(view) {
-  $$('.view').forEach(v => v.classList.remove('active'));
-  $$('.nav-btn').forEach(b => b.classList.remove('active'));
-
-  $('#view-' + view).classList.add('active');
-  $('#nav-' + view).classList.add('active');
-
-  state.currentView = view;
-
-  if (view === 'my') renderMyPage();
-  if (view === 'review') renderReview();
+// ─── Review Mode ─────────────────────────────────────────────────────────
+function switchToReview() {
+  switchView('review');
+  renderReview();
 }
 
-function switchToView(view) { switchView(view); }
-
-// ─── My Page ──────────────────────────────────────────────────────────────
-function renderMyPage() {
-  $('#statsDays').textContent = state.checkedInDays.reduce((a, b) => a + b, 0);
-
-  const grid = $('#dayGrid');
-  grid.innerHTML = '';
-  for (let i = 1; i <= 21; i++) {
-    const box = document.createElement('div');
-    box.className = 'day-box';
-    if (i === state.currentDay) box.classList.add('active');
-    if (i > state.currentDay && state.checkedInDays[i - 1] === 0) box.classList.add('locked');
-
-    const num = document.createElement('div');
-    num.className = 'day-box-num';
-    num.textContent = i;
-
-    const label = document.createElement('div');
-    label.className = 'day-box-label';
-    label.textContent = '第' + i + '天';
-
-    const status = document.createElement('div');
-    status.className = 'day-box-status';
-    if (state.checkedInDays[i - 1] === 1) status.textContent = '✅';
-    else if (i === state.currentDay) status.textContent = '🔥';
-    else if (i > state.currentDay) status.textContent = '🔒';
-    else status.textContent = '○';
-
-    box.appendChild(num);
-    box.appendChild(label);
-    box.appendChild(status);
-    box.onclick = () => jumpToDay(i);
-    grid.appendChild(box);
-  }
-
-  const wrongContent = $('#wrongListContent');
-  if (state.wrongWords.length === 0) {
-    wrongContent.innerHTML = '<div class="empty-state"><div class="empty-state-emoji">🌟</div><div>暂时没有错题，太棒了！</div></div>';
-  } else {
-    wrongContent.innerHTML = state.wrongWords.map(w =>
-      '<div class="wrong-word-item"><span><span class="wrong-word-en">' + w.english + '</span> <span class="wrong-word-zh">' + w.chinese + '</span></span><button onclick="speak(\'' + w.english + '\')" style="background:none;border:none;cursor:pointer;font-size:16px;">🔊</button></div>'
-    ).join('');
-  }
-}
-
-// ─── Review Mode ──────────────────────────────────────────────────────────
 function renderReview() {
   const content = $('#reviewContent');
   if (state.wrongWords.length === 0) {
     content.innerHTML = '<div class="empty-state"><div class="empty-state-emoji">🎉</div><div>错题本是空的！继续保持！</div></div>';
     return;
   }
-  content.innerHTML = '<div class="dictation-header"><div class="dictation-day-label">📚 错题复习</div><div class="dictation-progress">共' + state.wrongWords.length + '个错词</div></div>' +
-    '<div class="dictation-input-wrap"><input type="text" class="dictation-input" id="revInput" placeholder="输入英文单词" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>' +
-    '<div class="dictation-answer" id="revAnswer"><div class="answer-english" id="revEnglish"></div><div class="answer-chinese" id="revChinese"></div></div>' +
-    '<button class="dictation-submit" id="revSubmit" onclick="submitReview()">确认 ✓</button>' +
-    '<button class="dictation-submit" id="revNextBtn" onclick="nextReview()" style="display:none;margin-top:8px;background:var(--success);">下一题 →</button>';
 
+  window.revIdx = 0;
+  window.revDone = false;
 
-  // Wait for DOM to paint new elements before accessing them
+  const html = `
+    <div style="text-align:center;margin-bottom:14px;font-size:14px;color:var(--muted);">共${state.wrongWords.length}个错词</div>
+    <div class="dict-prompt" style="margin-bottom:16px">
+      <div class="dict-chinese" id="revChinese">-</div>
+    </div>
+    <input type="text" class="dict-input" id="revInput" placeholder="输入英文单词" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="margin-bottom:12px">
+    <div class="dict-answer" id="revAnswer">
+      <div class="answer-en" id="revEn"></div>
+      <div class="answer-zh" id="revZh"></div>
+    </div>
+    <button class="dict-btn" id="revSubmitBtn" onclick="submitReview()">确认</button>
+    <button class="dict-btn dict-btn-next" id="revNextBtn" onclick="nextReview()" style="display:none;background:var(--success)">下一题 →</button>
+  `;
+  content.innerHTML = html;
+
   setTimeout(() => {
-    document.getElementById('revInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitReview(); });
-    revIndex = 0;
-    revAnswered = false;
+    $('#revInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitReview(); });
     showRevWord();
-  }, 50);
+  }, 60);
 }
 
-let revIndex = 0;
-let revAnswered = false;
-
 function showRevWord() {
-  const w = state.wrongWords[revIndex];
+  if (window.revIdx >= state.wrongWords.length) {
+    $('#reviewContent').innerHTML = `<div class="result-card"><div class="result-emoji">🎉</div><div class="result-title">复习完成！</div><div class="result-subtitle">已经把错题过了一遍</div><button class="dict-btn" onclick="renderReview()">再来一遍</button></div>`;
+    return;
+  }
+  const w = state.wrongWords[window.revIdx];
+  $('#revChinese').textContent = w.means[0];
   $('#revInput').value = '';
   $('#revInput').disabled = false;
-  $('#revSubmit').style.display = '';
+  $('#revInput').classList.remove('correct','wrong');
+  $('#revAnswer').classList.remove('show','correct-a','wrong-a');
+  $('#revSubmitBtn').style.display = '';
   $('#revNextBtn').style.display = 'none';
-  $('#revAnswer').classList.remove('show');
-  $('#revInput').classList.remove('correct', 'wrong');
+  window.revAnswered = false;
   $('#revInput').focus();
-  revAnswered = false;
 }
 
 function submitReview() {
-  if (revAnswered) return;
-  const w = state.wrongWords[revIndex];
+  if (window.revAnswered) return;
+  const w = state.wrongWords[window.revIdx];
   const input = $('#revInput').value.trim().toLowerCase();
-  revAnswered = true;
-
+  window.revAnswered = true;
   $('#revInput').disabled = true;
-  $('#revSubmit').style.display = 'none';
-
+  $('#revSubmitBtn').style.display = 'none';
   const isCorrect = input === w.english.toLowerCase();
   if (isCorrect) {
     $('#revInput').classList.add('correct');
-    $('#revAnswer').classList.add('show', 'correct-answer');
-    $('#revAnswer').classList.remove('wrong-answer');
-    $('#revEnglish').classList.remove('wrong');
-    $('#revEnglish').textContent = w.english;
-    $('#revChinese').textContent = w.chinese;
+    $('#revAnswer').classList.add('show','correct-a');
+    $('#revAnswer').classList.remove('wrong-a');
+    $('#revEn').textContent = w.english;
+    $('#revEn').className = 'answer-en correct-c';
+    $('#revZh').innerHTML = w.means.join('；');
+    // Remove from wrong words if correct
+    state.wrongWords.splice(window.revIdx, 1);
+    save();
+    window.revIdx--;
   } else {
     $('#revInput').classList.add('wrong');
-    $('#revAnswer').classList.add('show', 'wrong-answer');
-    $('#revAnswer').classList.remove('correct-answer');
-    $('#revEnglish').classList.add('wrong');
-    $('#revEnglish').textContent = w.english;
-    $('#revChinese').textContent = w.chinese;
+    $('#revAnswer').classList.add('show','wrong-a');
+    $('#revAnswer').classList.remove('correct-a');
+    $('#revEn').textContent = w.english;
+    $('#revEn').className = 'answer-en wrong-c';
+    $('#revZh').innerHTML = w.means.join('；');
   }
-
   $('#revNextBtn').style.display = '';
+  window.revIdx++;
 }
 
 function nextReview() {
-  revIndex++;
-  if (revIndex >= state.wrongWords.length) {
-    $('#reviewContent').innerHTML = '<div class="result-card"><div class="result-emoji">🎉</div><div class="result-title">复习完成！</div><div class="result-subtitle">把所有错题都过了一遍</div><button class="btn btn-next" onclick="renderReview()">再来一遍</button></div>';
-  } else {
-    showRevWord();
+  showRevWord();
+}
+
+// ─── My Page ─────────────────────────────────────────────────────────────
+function renderMyPage() {
+  const done = state.checkedInDays.reduce((a,b)=>a+b,0);
+  $('#myDays').textContent = done;
+
+  const grid = $('#myDayGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 21; i++) {
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--card);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow);';
+    box.innerHTML = `<div style="font-family:'Fredoka One',cursive;font-size:20px;color:var(--primary)">${i}</div>`;
+    if (state.checkedInDays[i-1] === 1) {
+      box.style.background = '#FFF7E6';
+      box.style.border = '2px solid var(--gold)';
+      box.innerHTML += `<div style="font-size:12px;color:var(--gold)">✅ 完成</div>`;
+    } else if (i === state.currentDay) {
+      box.style.background = '#EBF4FF';
+      box.style.border = '2px solid var(--primary)';
+      box.innerHTML += `<div style="font-size:12px;color:var(--primary)">🔥 今天</div>`;
+    } else if (!isUnlocked(i)) {
+      box.style.opacity = '0.4';
+      box.innerHTML += `<div style="font-size:12px;color:var(--muted)">🔒</div>`;
+    } else {
+      box.innerHTML += `<div style="font-size:12px;color:var(--muted)">○ 待解锁</div>`;
+    }
+    box.onclick = () => { if (isUnlocked(i)) { state.currentDay = i; switchView('learn'); renderLearnView(); } };
+    grid.appendChild(box);
   }
+
+  const wl = $('#wrongListContent');
+  if (state.wrongWords.length === 0) {
+    wl.innerHTML = '<div class="empty-state"><div class="empty-state-emoji">🌟</div><div>暂时没有错题，太棒了！</div></div>';
+  } else {
+    wl.innerHTML = state.wrongWords.map(w => `
+      <div class="wrong-item">
+        <span><span class="wrong-en">${w.english}</span> <span class="wrong-zh">${w.means[0]}</span></span>
+        <button class="wrong-speak" onclick="speak('${w.english.replace(/'/g,"\\'")}')">🔊</button>
+      </div>`).join('');
+  }
+}
+
+// ─── View Switching ───────────────────────────────────────────────────────
+function switchView(name) {
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  $$('.nav-btn').forEach(b=>b.classList.remove('active'));
+  $('#view-'+name).classList.add('active');
+  $('#nav-'+name).classList.add('active');
+
+  if (name === 'learn') renderLearnView();
+  if (name === 'dict') { initDict(); }
+  if (name === 'review') renderReview();
+  if (name === 'my') renderMyPage();
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────
@@ -1546,29 +1059,30 @@ function showModal(emoji, title, subtitle) {
   spawnConfetti();
 }
 
-function closeModal() {
-  $('#modal').classList.remove('show');
-}
+function closeModal() { $('#modal').classList.remove('show'); }
+$('#modal').addEventListener('click', e => { if (e.target === $('#modal')) closeModal(); });
 
 function spawnConfetti() {
-  const modal = $('#modalCard');
-  const colors = ['#FF6B6B', '#FFB347', '#5DCA5D', '#5B8FF9', '#A855F7', '#FCD34D'];
-  for (let i = 0; i < 30; i++) {
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.left = Math.random() * 100 + '%';
-    piece.style.top = '-10px';
-    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-    piece.style.animationDelay = Math.random() * 0.5 + 's';
-    piece.style.animationDuration = (0.8 + Math.random() * 0.5) + 's';
-    piece.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
-    modal.appendChild(piece);
-    setTimeout(() => piece.remove(), 1500);
+  const card = $('#modalCard');
+  const colors = ['#FF6B6B','#FFB347','#5DCA5D','#5B8FF9','#A855F7'];
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = (Math.random()*100)+'%';
+    p.style.top = '0';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDelay = (Math.random()*0.4)+'s';
+    p.style.animationDuration = (0.8+Math.random()*0.4)+'s';
+    card.appendChild(p);
+    setTimeout(()=>p.remove(), 1500);
   }
 }
 
-// Close modal on overlay click
-$('#modal').onclick = e => { if (e.target === $('#modal')) closeModal(); };
+// ─── Dictation Enter Key ─────────────────────────────────────────────────
+$('#dictInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitDict(); });
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+renderLearnView();
 </script>
 </body>
 </html>
