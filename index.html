@@ -640,7 +640,13 @@ function $(s) { return document.querySelector(s); }
 function $$(s) { return document.querySelectorAll(s); }
 
 function isUnlocked(day) {
-  return state.unlockedDays.includes(day);
+  // All days accessible for learning/revision
+  // Check-in requires previous day checked in (with 3-day grace)
+  if (day === 1) return true;
+  const prevDone = state.checkedInDays[day-2] === 1;
+  const currentMax = state.checkedInDays.reduce((max, done, i) => done ? i+1 : max, 0);
+  const withinGrace = day <= currentMax + 3;
+  return prevDone || withinGrace || currentMax === 0;
 }
 
 function getCurrentDayObj() {
@@ -649,16 +655,8 @@ function getCurrentDayObj() {
 
 // ─── Unlock Logic ───────────────────────────────────────────────────────
 function tryUnlockNext() {
-  const next = state.currentDay + 1;
-  if (next > 21) return;
-  if (!state.unlockedDays.includes(next)) {
-    // keep unlocked days to max 3
-    if (state.unlockedDays.length >= 3) {
-      state.unlockedDays.shift(); // remove oldest
-    }
-    state.unlockedDays.push(next);
-    save();
-  }
+  // No-op: all days always accessible for revision
+  // Only check-in state advances
 }
 
 // ─── Progress Track ─────────────────────────────────────────────────────
@@ -839,6 +837,7 @@ function submitDict() {
   const isCorrect = input === correct;
   if (isCorrect) {
     state.dictCorrect++;
+    state.learnedSet.add(w.english);
     $('#dictInput').classList.add('correct');
     $('#dictAnswer').classList.add('show','correct-a');
     $('#dictAnswer').classList.remove('wrong-a');
@@ -846,6 +845,8 @@ function submitDict() {
     $('#answerEn').className = 'answer-en correct-c';
     $('#answerZh').innerHTML = w.means.join('；');
     $('#answerMsg').textContent = CORRECT_MSGS[Math.floor(Math.random()*CORRECT_MSGS.length)];
+    // Auto advance to next word after short delay
+    setTimeout(() => nextDict(), 800);
   } else {
     $('#dictInput').classList.add('wrong');
     $('#dictAnswer').classList.add('show','wrong-a');
@@ -858,6 +859,17 @@ function submitDict() {
       state.wrongWords.push(w);
       save();
     }
+    // Clear input for retry
+    setTimeout(() => {
+      $('#dictInput').value = '';
+      $('#dictInput').classList.remove('wrong');
+      $('#dictInput').disabled = false;
+      $('#dictInput').focus();
+      state.dictAnswered = false;
+      $('#dictAnswer').classList.remove('show');
+      $('#dictNextBtn').style.display = 'none';
+      $('#dictSubmitBtn').style.display = '';
+    }, 600);
   }
 
   const pct = state.dictTotal > 0 ? (state.dictCorrect / state.dictTotal * 100) : 0;
