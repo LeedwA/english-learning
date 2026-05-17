@@ -876,6 +876,7 @@ function submitDict() {
   if (isCorrect) {
     state.dictCorrect++;
     state.learnedSet.add(w.english);
+    speak(w.english);
     $('#dictInput').classList.add('correct');
     $('#dictAnswer').classList.add('show','correct-a');
     $('#dictAnswer').classList.remove('wrong-a');
