@@ -272,6 +272,9 @@ body {
 
 <div class="main-content">
 
+  <!-- Day Tabs -->
+  <div class="day-tabs" id="dayTabs"></div>
+
   <!-- LEARN View -->
   <div class="view active" id="view-learn">
     <div class="section-title" id="dayTitle">第1天</div>
@@ -640,13 +643,11 @@ function $(s) { return document.querySelector(s); }
 function $$(s) { return document.querySelectorAll(s); }
 
 function isUnlocked(day) {
-  // All days accessible for learning/revision
-  // Check-in requires previous day checked in (with 3-day grace)
-  if (day === 1) return true;
-  const prevDone = state.checkedInDays[day-2] === 1;
-  const currentMax = state.checkedInDays.reduce((max, done, i) => done ? i+1 : max, 0);
-  const withinGrace = day <= currentMax + 3;
-  return prevDone || withinGrace || currentMax === 0;
+  // Only show unlocked (next 3 days from current progress)
+  // Based on checkins: max 3 consecutive days unlocked from first unchecked
+  const maxChecked = state.checkedInDays.reduce((max, done, i) => done ? i+1 : max, 0);
+  const maxUnlocked = Math.min(maxChecked + 3, 21);
+  return day >= 1 && day <= maxUnlocked;
 }
 
 function getCurrentDayObj() {
@@ -671,9 +672,45 @@ function renderProgressTrack() {
     if (i === state.currentDay) dot.classList.add('today');
     if (!isUnlocked(i)) dot.classList.add('locked');
     if (i === state.currentDay) dot.classList.add('active-day');
+    dot.onclick = () => jumpToDay(i);
     track.appendChild(dot);
   }
   $('#dayCounter').textContent = '第' + state.currentDay + '天';
+}
+
+function renderDayTabs() {
+  const tabs = $('#dayTabs');
+  tabs.innerHTML = '';
+  for (let i = 1; i <= 21; i++) {
+    const tab = document.createElement('div');
+    tab.className = 'day-tab';
+    tab.id = 'dayTab' + i;
+    tab.innerHTML = '<span class="day-tab-num">第' + i + '天</span>';
+    if (state.checkedInDays[i-1] === 1) {
+      tab.classList.add('done');
+    }
+    if (i === state.currentDay) {
+      tab.classList.add('active');
+    }
+    if (!isUnlocked(i)) {
+      tab.classList.add('locked');
+    }
+    tab.onclick = () => {
+      if (isUnlocked(i)) jumpToDay(i);
+    };
+    tabs.appendChild(tab);
+  }
+}
+
+function updateDayTabs() {
+  for (let i = 1; i <= 21; i++) {
+    const tab = $('#dayTab' + i);
+    if (!tab) continue;
+    tab.className = 'day-tab';
+    if (state.checkedInDays[i-1] === 1) tab.classList.add('done');
+    if (i === state.currentDay) tab.classList.add('active');
+    if (!isUnlocked(i)) tab.classList.add('locked');
+  }
 }
 
 // ─── Learn View ─────────────────────────────────────────────────────────
@@ -716,6 +753,7 @@ function renderLearnView() {
   renderStudyWord();
   renderLearnActions();
   renderProgressTrack();
+  renderDayTabs();
 }
 
 function renderStudyProgress() {
@@ -904,7 +942,7 @@ function showDictResult() {
         <div class="result-stat"><div class="result-stat-num">${state.dictTotal - state.dictCorrect}</div><div class="result-stat-label">错误</div></div>
         <div class="result-stat"><div class="result-stat-num">${rate}%</div><div class="result-stat-label">正确率</div></div>
       </div>
-      <button class="dict-btn" onclick="switchView('learn')" style="margin-top:8px">返回学习</button>
+      <button class="dict-btn" onclick="finishDayDict()" style="margin-top:8px">${state.currentDay < 21 ? '下一题 →' : '完成'}</button>
     </div>`;
 }
 
@@ -912,11 +950,38 @@ function showDictResult() {
 function doCheckin() {
   if (state.checkedInDays[state.currentDay-1] === 1) return;
   state.checkedInDays[state.currentDay-1] = 1;
-  tryUnlockNext();
   save();
-  renderLearnView();
+  renderProgressTrack();
+  updateDayTabs();
   renderMyPage();
-  showModal('🎉', state.currentDay + '天打卡完成！', '坚持下去，明天继续！');
+  showModal('🎉', '第' + state.currentDay + '天打卡完成！', '坚持下去，明天继续！');
+}
+
+function finishDayDict() {
+  if (state.currentDay < 21) {
+    const next = state.currentDay + 1;
+    if (isUnlocked(next)) {
+      state.currentDay = next;
+      save();
+      switchView('learn');
+      renderLearnView();
+    } else {
+      switchView('learn');
+      renderLearnView();
+    }
+  } else {
+    switchView('learn');
+    renderLearnView();
+  }
+}
+
+function jumpToDay(day) {
+  state.currentDay = day;
+  state.studyIndex = 0;
+  state.studyKnown = [];
+  save();
+  switchView('learn');
+  renderLearnView();
 }
 
 // ─── Review Mode ─────────────────────────────────────────────────────────
@@ -1094,6 +1159,8 @@ function spawnConfetti() {
 $('#dictInput').addEventListener('keypress', e => { if (e.key === 'Enter') submitDict(); });
 
 // ─── Init ─────────────────────────────────────────────────────────────────
+renderProgressTrack();
+renderDayTabs();
 renderLearnView();
 </script>
 </body>
